@@ -6,7 +6,17 @@ const gradientMapping = {
     red: "linear-gradient(hsl(3, 90%, 50%), hsl(348, 90%, 50%))",
     indigo: "linear-gradient(hsl(253, 90%, 50%), hsl(238, 90%, 50%))",
     orange: "linear-gradient(hsl(43, 90%, 50%), hsl(28, 90%, 50%))",
-    green: "linear-gradient(hsl(123, 90%, 40%), hsl(108, 90%, 40%))"
+    green: "linear-gradient(hsl(123, 90%, 40%), hsl(108, 90%, 40%))",
+    pinkviolet: "linear-gradient(135deg, #D14CFE, #7A1DFB)",
+    cyanblue: "linear-gradient(135deg, #00C6FF, #0072FF)",
+    tealgreen: "linear-gradient(135deg, #7CFF67, #28C99A)",
+    neonviolet: "linear-gradient(135deg, #A259FF, #6A1FFF)",
+    electricblue: "linear-gradient(135deg, #00B4FF, #007BFF)",
+    skycyan: "linear-gradient(135deg, #4FC3FF, #49A8FF)",
+    deep_magenta: "linear-gradient(135deg, #B62482, #6A1666)",
+    deep_sapphire: "linear-gradient(135deg, #005A9C, #003F6B)",
+    deep_teal: "linear-gradient(135deg, #008F7A, #005F59)"
+
 };
 
 export default function GlassIcons({ items, className }) {

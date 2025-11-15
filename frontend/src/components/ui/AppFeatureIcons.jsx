@@ -6,17 +6,17 @@ export default function AppFeatureIcons() {
     const items = [
         {
             icon: <Calendar />,
-            color: "purple",
+            color: "deep_magenta",
             label: <ScrambledText>Kalender</ScrambledText>
         },
         {
             icon: <Folder />,
-            color: "blue",
+            color: "deep_sapphire",
             label: <ScrambledText>Files</ScrambledText>
         },
         {
             icon: <Cloud />,
-            color: "indigo",
+            color: "deep_teal",
             label: <ScrambledText>Wetter</ScrambledText>
         }
     ];

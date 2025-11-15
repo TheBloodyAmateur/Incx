@@ -6,13 +6,35 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 1;
+}
+
+.logo-fixed {
+    position: fixed;
+    top: calc(2rem - 43px);
+    right: 2rem;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+}
+
+.logo-fixed img {
+    height: 200px;
+    width: auto;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    transition: transform 0.3s ease;
+}
+
+.logo-fixed img:hover {
+    transform: scale(1.05);
 }
 
 .nav-wrapper {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    z-index: 20;
+    top: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
 }
 
 .login-box {
@@ -68,7 +90,8 @@
 
 .nav-wrapper {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    z-index: 2;
+    top: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
 }

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import Aurora from "../../components/aurora/Aurora";
-import CardNav from "../../components/ui/CardNav";
+import LetterGlitch from "../../components/ui/LetterGlitch";
+import SimpleNav from "../../components/ui/SimpleNav";
 import { useNavigate } from "react-router-dom";
 
+import logo from "../../assets/logo.png";
 import "./LoginPage.css";
 
 export default function LoginPage() {
@@ -17,74 +18,50 @@ export default function LoginPage() {
         navigate("/dashboard");
     };
 
-    // Menü Items
-    const menuItems = [
-        {
-            label: "Einstellungen",
-            bgColor: "#0D0716",
-            textColor: "#fff",
-            links: [
-                {
-                    label: devMode ? "Dev-Mode ausschalten" : "Dev-Mode einschalten",
-                    ariaLabel: "toggle dev mode",
-                    href: "#",
-                    onClick: () => setDevMode(!devMode)
-                }
-            ]
-        }
-    ];
-
     return (
         <div className="login-wrapper">
-
-            <Aurora
-                colorStops={["#5227FF", "#7CFF67", "#5227FF"]}
-                amplitude={1.0}
-                blend={0.5}
-                speed={0.6}
+            <LetterGlitch
+                glitchColors={["#3A2F66", "#2E4A7F", "#0F6A77"]}
+                glitchSpeed={50}
+                outerVignette={true}
+                centerVignette={false}
             />
 
-            {/* Menu rechts oben */}
+            <div className="logo-fixed">
+                <img src={logo} alt="incx" />
+            </div>
+
             <div className="nav-wrapper">
-                <CardNav
-                    logo="https://dummyimage.com/60x60/8d8/fff.png&text=incx"
-                    items={menuItems}
-                    baseColor="#ffffffcc"
-                    menuColor="#000"
-                    buttonBgColor="#222"
-                    buttonTextColor="#fff"
+                <SimpleNav
+                    devMode={devMode}
+                    onDevModeToggle={setDevMode}
                 />
             </div>
 
-            {/* Login Box */}
             <div className="login-box">
-
                 <h1>{devMode ? "Login (DEV)" : "Login"}</h1>
 
-                {/* USERNAME → zeigt Passwort */}
                 <label>Username</label>
                 <input
                     type={devMode ? "text" : "password"}
                     value={fakePassword}
                     onChange={(e) => setFakePassword(e.target.value)}
-                    placeholder={devMode ? "Normaler Username" : "•••••••"}
+                    placeholder={devMode ? "Username" : "•••••••"}
                 />
 
-                {/* PASSWORD → zeigt Username */}
                 <label>Password</label>
                 <input
                     type={devMode ? "password" : "text"}
                     value={fakeUsername}
                     onChange={(e) => setFakeUsername(e.target.value)}
-                    placeholder={devMode ? "••••••" : "Dein Username"}
+                    placeholder={devMode ? "••••••" : "Username"}
                 />
 
                 <button onClick={handleLogin}>Sign In</button>
 
                 <a href="/forgot" className="forgot-link">
-                    Passwort vergessen?
+                    Forgot Password?
                 </a>
-
             </div>
         </div>
     );

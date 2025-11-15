@@ -6,10 +6,10 @@ export default function DashboardPage() {
     return (
         <div className="dashboard-wrapper">
             <Aurora
-                colorStops={["#5227FF", "#7CFF67", "#5227FF"]}
-                blend={0.5}
+                colorStops={["#1A1A1A", "#46338A", "#0F6A77"]}
+                blend={0.55}
                 amplitude={1.0}
-                speed={0.5}
+                speed={0.35}
             />
 
             <div className="center-content">
