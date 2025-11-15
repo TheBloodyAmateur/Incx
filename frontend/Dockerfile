@@ -1,3 +1,17 @@
-# Stage 1: Build
-# TODO replace with actual image
-FROM node:22-alpine AS build
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+# serve is a tiny static file server for Node
+RUN npm install -g serve
+
+EXPOSE 3000
+
+CMD ["serve", "-s", "dist", "-l", "3000"]
