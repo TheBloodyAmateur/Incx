@@ -2,6 +2,7 @@ package com.github.thebloodyamateur.incx.service;
 
 import java.io.ByteArrayInputStream;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,8 +21,9 @@ import io.minio.RemoveBucketArgs;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
-@Slf4j(topic = "FileService")
+@Slf4j(topic = "FileServiceLogger")
 public class FileService {
+    @Autowired
     private MinioClient minioClient;
     private MinioBucketsRepository minioBucketsRepository;
     private MinioObjectsRepository minioObjectsRepository;

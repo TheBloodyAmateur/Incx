@@ -15,7 +15,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -37,7 +36,7 @@ public class MinioObject {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "bucket_id", nullable = false)
     private MinioBucket minioBucket;
 
@@ -45,7 +44,7 @@ public class MinioObject {
     private String name;
 
     @Enumerated(EnumType.STRING)
-    @Column(name="type")
+    @Column(name = "type")
     private ObjectType type;
 
     @ManyToOne
@@ -82,11 +81,11 @@ public class MinioObject {
         this.children.add(child);
         child.setParent(this);
     }
-    
+
     public void removeChild(MinioObject child) {
         this.children.remove(child);
         child.setParent(null);
-    }    
+    }
 
     public enum ObjectType {
         FILE, FOLDER

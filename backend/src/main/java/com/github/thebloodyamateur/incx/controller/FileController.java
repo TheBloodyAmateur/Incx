@@ -6,9 +6,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.github.thebloodyamateur.incx.dto.GeneralResponse;
 import com.github.thebloodyamateur.incx.service.FileService;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,11 +17,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
-@RequestMapping("/files")
+@RequestMapping("files")
 @Slf4j(topic = "FileController")
+@AllArgsConstructor
 public class FileController {
-
-    @Autowired
     private FileService fileService;
 
     @DeleteMapping("/bucket/name/{bucketname}")
