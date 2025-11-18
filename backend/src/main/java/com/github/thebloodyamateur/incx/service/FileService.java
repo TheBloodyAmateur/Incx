@@ -18,12 +18,13 @@ import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveBucketArgs;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+@AllArgsConstructor
 @Service
 @Slf4j(topic = "FileServiceLogger")
 public class FileService {
-    @Autowired
     private MinioClient minioClient;
     private MinioBucketsRepository minioBucketsRepository;
     private MinioObjectsRepository minioObjectsRepository;
@@ -212,5 +213,54 @@ public class FileService {
             return ResponseEntity.status(404).body(new GeneralResponse("Failed to create directory."));
         }
         
+    }
+
+    public ResponseEntity<GeneralResponse> deleteDirectory(String directoryName, String parentDirectory, String bucketName) {
+        try {
+        
+            // Check if bucket exists
+            MinioBucket bucket = minioBucketsRepository.findByBucketName(bucketName).orElse(null);
+            if (bucket == null) {
+                log.error("Bucket '{}' not found in database.", bucketName);
+                return ResponseEntity.status(422).body(new GeneralResponse("Bucket not found."));
+            }
+
+            log.info("Found bucket '{}'. Proceeding to delete directory '{}'", bucketName, directoryName);
+
+            // Get the minio object for the directory
+            MinioObject directoryObject = minioObjectsRepository.findByMinioBucketAndName(bucket, directoryName).orElse(null);
+            if (directoryObject == null || directoryObject.getType() != MinioObject.ObjectType.FOLDER) {
+                log.error("Directory '{}' not found or is not a folder in bucket '{}'.", directoryName, bucketName);
+                return ResponseEntity.status(422).body(new GeneralResponse("Directory not found or is not a folder."));
+            }
+
+            log.info("Found directory object for '{}'. Checking if it is empty.", directoryName);
+
+            // Check if the directory is empty
+           boolean isNotEmpty = minioObjectsRepository.folderExistsAndIsNotEmpty(bucket, directoryName);
+           if (isNotEmpty) {
+                log.warn("Directory '{}' is not empty. Cannot delete non-empty directories.", directoryName);
+                return ResponseEntity.status(422).body(new GeneralResponse("Directory is not empty."));
+           }
+
+            log.info("Directory '{}' is empty. Proceeding to delete.", directoryName);
+
+            // Delete the directory object from MinIO
+            minioClient.removeObject(
+                io.minio.RemoveObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(directoryObject.getMinioPath().substring(bucketName.length() + 1))
+                    .build()
+            );
+            log.info("Directory '{}' deleted successfully from bucket '{}'.", directoryName, bucketName);
+
+            // Delete the directory object from the database
+            minioObjectsRepository.delete(directoryObject);
+
+            return ResponseEntity.ok(new GeneralResponse("Directory "  + directoryName + " deleted successfully."));
+        } catch (Exception e) {
+            log.error("Error deleting directory '{}' in bucket '{}': {}", directoryName, bucketName, e.getMessage());
+            return ResponseEntity.status(404).body(new GeneralResponse("Failed to delete directory."));
+        }
     }
 }

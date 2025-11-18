@@ -23,4 +23,13 @@ public interface MinioObjectsRepository extends JpaRepository<MinioObject, Long>
 
     @Query("SELECT o FROM MinioObject o WHERE o.minioBucket = :minioBucket AND o.name = :name")
     Optional<MinioObject> findByMinioBucketAndName(MinioBucket minioBucket, String name);
+    
+    @Query("SELECT CASE WHEN COUNT(o) > 0 THEN true ELSE false END " +
+       "FROM MinioObject o " +
+       "WHERE o.minioBucket = :minioBucket " +
+       "AND o.name = :pathName " +
+       "AND o.type = 'FOLDER' " +
+       "AND EXISTS (SELECT 1 FROM MinioObject c WHERE c.parent = o)")
+    boolean folderExistsAndIsNotEmpty(@Param("minioBucket") MinioBucket minioBucket, @Param("pathName") String pathName);
+
 }

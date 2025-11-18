@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 public class FileController {
     private FileService fileService;
 
-    @DeleteMapping("/bucket/name/{bucketname}")
+    @DeleteMapping("bucket/name/{bucketname}")
     public ResponseEntity<GeneralResponse> deleteBucketByName(@PathVariable String bucketname) {
         boolean isDeleted = fileService.deleteBucket(bucketname);
         if (isDeleted) {
@@ -35,7 +35,7 @@ public class FileController {
         }
     }
 
-    @DeleteMapping("/bucket/id/{id}")
+    @DeleteMapping("bucket/id/{id}")
     public ResponseEntity<GeneralResponse> deleteBucketById(@PathVariable Long id) {
         boolean isDeleted = fileService.deleteBucketById(id);
         if (isDeleted) {
@@ -47,7 +47,7 @@ public class FileController {
         }
     }
 
-    @PostMapping(value = "/upload", consumes = "multipart/form-data")
+    @PostMapping(value = "upload", consumes = "multipart/form-data")
     public ResponseEntity<GeneralResponse> createFile(
         @RequestParam MultipartFile fileData,
         @RequestParam String fileName,
@@ -57,7 +57,7 @@ public class FileController {
         return fileService.uploadFile(fileData, fileName, bucketName);
     }
 
-    @DeleteMapping("/delete")
+    @DeleteMapping("delete")
     public ResponseEntity<GeneralResponse> deleteFile(
         @RequestParam String fileName,
         @RequestParam String bucketName)
@@ -75,5 +75,14 @@ public class FileController {
         log.info("Received directory creation request for directory: " + directoryName + " in bucket: " + bucketName);
         return fileService.createDirectory(directoryName, parentDirectory, bucketName);
     }
-    
+
+    @DeleteMapping("directory")
+    public ResponseEntity<GeneralResponse> deleteDirectory(
+        @RequestParam String directoryName, 
+        @RequestParam String parentDirectory,
+        @RequestParam String bucketName
+    ) {
+        log.info("Received directory creation request for directory: " + directoryName + " in bucket: " + bucketName);
+        return fileService.deleteDirectory(directoryName, parentDirectory, bucketName);
+    }  
 }
