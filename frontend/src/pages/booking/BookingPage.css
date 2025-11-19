@@ -1,0 +1,217 @@
+.booking-wrapper {
+    width: 100vw;
+    min-height: 100vh;
+    background-color: #1a1a1a; /* Dunkler Background passend zum Dashboard */
+    color: #e0e0e0;
+    display: flex;
+    justify-content: center;
+    padding-top: 50px;
+    font-family: 'Arial', sans-serif;
+}
+
+.booking-container {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2rem;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 600px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #fff;
+}
+
+.date-format-banner {
+    background: #46338A;
+    color: white;
+    padding: 0.5rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    /* F-M-1 Visualisierung */
+}
+
+.incx-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* F-M-3: Fokus Styles für Labels */
+.focusable-label {
+    font-size: 0.9rem;
+    color: #aaa;
+    outline: none;
+    width: fit-content;
+}
+
+.focusable-label:focus {
+    color: #0F6A77;
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+input[type="text"],
+input[type="number"] {
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background: #2a2a2a;
+    color: white;
+    font-size: 1rem;
+}
+
+input:focus {
+    outline: 2px solid #46338A;
+}
+
+/* Slider Styles (F-M-2) */
+.slider-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #2a2a2a;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.range-slider {
+    width: 100%;
+    cursor: pointer;
+}
+
+.slider-value {
+    margin-top: 5px;
+    font-weight: bold;
+    color: #0F6A77;
+}
+
+/* Date Group (F-M-4) */
+.date-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: space-between;
+}
+
+.date-part {
+    display: flex;
+    flex-direction: column;
+    width: 30%;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.sub-label {
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 4px;
+    outline: none;
+}
+.sub-label:focus {
+    color: #fff;
+}
+
+/* Day Controls (F-M-5) */
+.day-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.day-controls button {
+    width: 30px;
+    background: #46338A;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.day-input {
+    width: 50px !important;
+    text-align: center;
+    cursor: not-allowed; /* Visualisiert ReadOnly */
+}
+
+/* Month Suggestions (F-M-6) */
+.relative {
+    position: relative;
+}
+
+.month-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #333;
+    border: 1px solid #555;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    z-index: 100;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.month-suggestions li {
+    padding: 8px;
+    border-bottom: 1px solid #444;
+    cursor: help; /* Zeigt an, dass man es nur anschauen soll */
+}
+
+.month-suggestions li:hover {
+    background: #444;
+}
+
+/* Error handling */
+.error-border {
+    border-color: #ff4444 !important;
+}
+
+.error-msg {
+    color: #ff4444;
+    font-size: 0.8rem;
+}
+
+.info-hint {
+    color: #0F6A77;
+    font-size: 0.8rem;
+    font-style: italic;
+}
+
+.submit-btn {
+    margin-top: 1rem;
+    padding: 15px;
+    background: linear-gradient(45deg, #46338A, #0F6A77);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.submit-btn:active {
+    transform: scale(0.98);
+}
+
+.error-summary {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid red;
+    padding: 10px;
+    text-align: center;
+    border-radius: 4px;
+}
