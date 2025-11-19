@@ -1,12 +1,14 @@
 package com.github.thebloodyamateur.incx.service;
 
 import java.io.ByteArrayInputStream;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.github.thebloodyamateur.incx.dto.ContentResponse;
 import com.github.thebloodyamateur.incx.dto.GeneralResponse;
 import com.github.thebloodyamateur.incx.persistence.model.MinioBucket;
 import com.github.thebloodyamateur.incx.persistence.model.MinioObject;
@@ -263,4 +265,28 @@ public class FileService {
             return ResponseEntity.status(404).body(new GeneralResponse("Failed to delete directory."));
         }
     }
+
+    public List<ContentResponse> getContent(String bucketName, String path) {
+        log.info("Fetching content for bucket '{}' and path '{}'", bucketName, path);
+
+        MinioBucket bucket = minioBucketsRepository.findByBucketName(bucketName)
+            .orElseThrow(() -> new RuntimeException("Bucket not found"));
+
+        if (path != null && !path.isEmpty()) {
+            log.info("Fetching content for path '{}'", path);
+            List<MinioObject> objects = minioObjectsRepository.findByMinioBucketAndParent_Name(bucket, path);
+            log.info("Found {} objects in path '{}'", objects.size(), path);
+            return objects.stream()
+                .map(obj -> new ContentResponse(obj.getName(), obj.getType().toString(), obj.getSize()))
+                .toList();
+        } else {
+            log.info("No path provided. Fetching root content.");
+            List<MinioObject> objects = minioObjectsRepository.findByMinioBucketAndParentIsNull(bucket);
+            log.info("Found {} objects in root of bucket '{}'", objects.size(), bucketName);
+            return objects.stream()
+                .map(obj -> new ContentResponse(obj.getName(), obj.getType().toString(), obj.getSize()))
+                .toList();
+        }
+    }
+
 }

@@ -2,22 +2,21 @@ import React from 'react';
 import './FileExplorer.css';
 
 export default function FileExplorer({ contents, currentPath, bucketName, onNavigate, onRefresh }) {
-    // TODO: Implement file download
     const handleDownload = async (fileName) => {
         console.log(`Download file: ${fileName}`);
     };
 
-    // TODO: Implement file deletion
     const handleDeleteFile = async (fileName) => {
         console.log(`Delete file: ${fileName}`);
         onRefresh();
     };
 
-    // TODO: Implement directory deletion
     const handleDeleteDirectory = async (directoryName) => {
         console.log(`Delete directory: ${directoryName}`);
         onRefresh();
     };
+
+    console.log('Rendering FileExplorer with contents:', contents);
 
     return (
         <div className="file-explorer-content">
@@ -36,38 +35,29 @@ export default function FileExplorer({ contents, currentPath, bucketName, onNavi
                 <span>Size</span>
                 <span>Actions</span>
             </div>
-            <ul className="file-list">
-                {contents.map(item => (
-                    <li key={item.name} className={item.type === 'FOLDER' ? 'directory' : 'file'}>
-                        <span
-                            className="file-name"
-                            onClick={() => {
-                                if (item.type === 'FOLDER') {
-                                    onNavigate([...currentPath, item.name]);
-                                } else {
-                                    handleDownload(item.name);
-                                }
-                            }}
-                        >
-                            {item.name}
-                        </span>
-                        <span>{item.type}</span>
-                        <span>{item.size ? `${(item.size / 1024).toFixed(2)} KB` : '-'}</span>
-                        <span className="file-actions">
-                            <button
-                                onClick={(e) => {
+            {contents && contents.length > 0 ? (
+                <ul className="file-list">
+                    {contents.map((item, index) => (
+                        <li key={`${item.name}-${index}`} className={item.type === 'FILE' ? 'file' : 'directory'}>
+                            <span className="file-name">{item.name}</span>
+                            <span>{item.type}</span>
+                            <span>{item.size ? `${(item.size / 1024).toFixed(2)} KB` : '-'}</span>
+                            <span className="file-actions">
+                                <button onClick={(e) => {
                                     e.stopPropagation();
-                                    item.type === 'FOLDER'
-                                        ? handleDeleteDirectory(item.name)
-                                        : handleDeleteFile(item.name);
-                                }}
-                            >
-                                Delete
-                            </button>
-                        </span>
-                    </li>
-                ))}
-            </ul>
+                                    item.type === 'FOLDER' ? handleDeleteDirectory(item.name) : handleDeleteFile(item.name);
+                                }}>
+                                    Delete
+                                </button>
+                            </span>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <div className="no-contents">
+                    <p>No files or directories found.</p>
+                </div>
+            )}
         </div>
     );
 }

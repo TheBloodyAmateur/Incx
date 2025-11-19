@@ -45,3 +45,8 @@
     padding: 15px;
     overflow-y: auto;
 }
+
+.error-message {
+    color: #ff6b6b;
+    margin: 10px 0;
+}

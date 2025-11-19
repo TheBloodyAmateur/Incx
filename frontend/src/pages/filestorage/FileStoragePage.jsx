@@ -13,18 +13,39 @@ export default function FileStoragePage() {
     const [currentContents, setCurrentContents] = useState([]);
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [showCreateDirModal, setShowCreateDirModal] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     const fetchBucketContents = async (path = []) => {
-        // Replace with actual API call
-        const mockContents = [
-            { name: "Documents", type: "FOLDER", size: null },
-            { name: "image.jpg", type: "FILE", size: 102400 }
-        ];
-        setCurrentPath(path);
-        setCurrentContents(mockContents);
+        if (!username) return;
+
+        try {
+            setLoading(true);
+            setError(null);
+            const pathString = path.join('/');
+            console.log(`Fetching contents for bucket: ${username}, path: ${pathString}`);
+
+            const response = await fetch(`http://localhost:8080/api/files/content?bucketName=${username}&path=${pathString}`);
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch contents: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('Fetched data:', data);
+            setCurrentPath(path);
+            setCurrentContents(data);
+        } catch (error) {
+            console.error("Error fetching bucket contents:", error);
+            setError(error.message);
+            setCurrentContents([]);
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
+        console.log('Username:', username);
         if (username) {
             fetchBucketContents([]);
         }
@@ -53,6 +74,8 @@ export default function FileStoragePage() {
                     </div>
                 </div>
                 <div className="file-explorer">
+                    {loading && <p>Loading...</p>}
+                    {error && <p className="error-message">{error}</p>}
                     <FileExplorer
                         contents={currentContents}
                         currentPath={currentPath}

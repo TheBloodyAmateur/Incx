@@ -4,6 +4,8 @@
     display: flex;
     flex-direction: column;
     color: white;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 .path-navigation {
@@ -42,6 +44,7 @@
     margin: 0;
     flex: 1;
     overflow-y: auto;
+    min-height: 100px;
 }
 
 .file-list li {
@@ -52,22 +55,30 @@
     align-items: center;
 }
 
+.file-list li.directory {
+    font-weight: bold;
+}
+
+.file-list li.file {
+    color: lightblue;
+}
+
 .file-list li:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-.file-list li.directory .file-name {
-    font-weight: bold;
+.file-name {
     cursor: pointer;
 }
 
-.file-list li.file .file-name {
-    cursor: pointer;
-    color: lightblue;
+.no-contents {
+    padding: 20px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .file-actions button {
-    padding: 5px 10px;
+    padding: 4px 8px;
     background-color: rgba(255, 0, 0, 0.3);
     color: white;
     border: none;
