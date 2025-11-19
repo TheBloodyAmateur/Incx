@@ -1,8 +1,12 @@
+import { useSearchParams } from "react-router-dom";
 import Aurora from "../../components/aurora/Aurora";
 import AppFeatureIcons from "../../components/ui/AppFeatureIcons";
 import "./DashboardPage.css";
 
 export default function DashboardPage() {
+    const [searchParams] = useSearchParams();
+    const username = searchParams.get('username');
+
     return (
         <div className="dashboard-wrapper">
             <Aurora
@@ -11,9 +15,8 @@ export default function DashboardPage() {
                 amplitude={1.0}
                 speed={0.35}
             />
-
             <div className="center-content">
-                <AppFeatureIcons />
+                <AppFeatureIcons username={username} />
             </div>
         </div>
     );
