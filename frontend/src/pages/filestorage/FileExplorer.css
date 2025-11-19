@@ -1,0 +1,80 @@
+.file-explorer-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    color: white;
+}
+
+.path-navigation {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.path-navigation button {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    margin-right: 5px;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.path-navigation button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.file-list-header {
+    display: grid;
+    grid-template-columns: 3fr 1fr 1fr 1fr;
+    padding: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.file-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.file-list li {
+    display: grid;
+    grid-template-columns: 3fr 1fr 1fr 1fr;
+    padding: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    align-items: center;
+}
+
+.file-list li:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.file-list li.directory .file-name {
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.file-list li.file .file-name {
+    cursor: pointer;
+    color: lightblue;
+}
+
+.file-actions button {
+    padding: 5px 10px;
+    background-color: rgba(255, 0, 0, 0.3);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.file-actions button:hover {
+    background-color: rgba(255, 0, 0, 0.5);
+}
