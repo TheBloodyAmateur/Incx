@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Aurora from "../../components/aurora/Aurora";
 import FileExplorer from './FileExplorer';
-import UploadModal from './UploadModal';
-import CreateDirectoryModal from './CreateDirectoryModal';
 import "./FileStoragePage.css";
 
 export default function FileStoragePage() {
@@ -11,8 +9,6 @@ export default function FileStoragePage() {
     const username = searchParams.get('username');
     const [currentPath, setCurrentPath] = useState([]);
     const [currentContents, setCurrentContents] = useState([]);
-    const [showUploadModal, setShowUploadModal] = useState(false);
-    const [showCreateDirModal, setShowCreateDirModal] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -68,10 +64,6 @@ export default function FileStoragePage() {
             <div className="filestorage-content">
                 <div className="filestorage-header">
                     <h1>File Storage: {username}</h1>
-                    <div className="filestorage-actions">
-                        <button onClick={() => setShowUploadModal(true)}>Upload File</button>
-                        <button onClick={() => setShowCreateDirModal(true)}>Create Directory</button>
-                    </div>
                 </div>
                 <div className="file-explorer">
                     {loading && <p>Loading...</p>}
@@ -84,22 +76,6 @@ export default function FileStoragePage() {
                         onRefresh={() => fetchBucketContents(currentPath)}
                     />
                 </div>
-                {showUploadModal && (
-                    <UploadModal
-                        bucketName={username}
-                        currentPath={currentPath}
-                        onClose={() => setShowUploadModal(false)}
-                        onUploadSuccess={() => fetchBucketContents(currentPath)}
-                    />
-                )}
-                {showCreateDirModal && (
-                    <CreateDirectoryModal
-                        bucketName={username}
-                        currentPath={currentPath}
-                        onClose={() => setShowCreateDirModal(false)}
-                        onDirectoryCreated={() => fetchBucketContents(currentPath)}
-                    />
-                )}
             </div>
         </div>
     );

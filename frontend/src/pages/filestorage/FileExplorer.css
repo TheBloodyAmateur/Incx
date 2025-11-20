@@ -29,6 +29,39 @@
     background-color: rgba(255, 255, 255, 0.2);
 }
 
+.file-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.file-upload, .directory-create {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.file-upload input, .directory-create input {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+}
+
+.file-upload button, .directory-create button {
+    padding: 5px 10px;
+    background-color: rgba(0, 123, 255, 0.5);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.file-upload button:hover, .directory-create button:hover {
+    background-color: rgba(0, 123, 255, 0.7);
+}
+
 .file-list-header {
     display: grid;
     grid-template-columns: 3fr 1fr 1fr 1fr;

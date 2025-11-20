@@ -28,14 +28,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class FileController {
     private FileService fileService;
 
-    @PostMapping(value = "upload", consumes = "multipart/form-data")
+    @PostMapping(value = "upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<GeneralResponse> createFile(
         @RequestParam MultipartFile fileData,
         @RequestParam String fileName,
-        @RequestParam String bucketName)
-    {
-        log.info("Received file upload request for file: " + fileName + " to bucket: " + bucketName);
-        return fileService.uploadFile(fileData, fileName, bucketName);
+        @RequestParam String bucketName,
+        @RequestParam(required = false) String parentDirectory
+    ) {
+        log.info("Received file upload request for file: " + fileName + " to bucket: " + bucketName + " in directory: " + parentDirectory);
+        return fileService.uploadFile(fileData, fileName, bucketName, parentDirectory);
     }
 
     @DeleteMapping("delete")
