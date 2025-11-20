@@ -161,43 +161,51 @@ export default function FileExplorer({ contents, currentPath, bucketName, onNavi
                 <span>Actions</span>
             </div>
             {contents && contents.length > 0 ? (
-                <ul className="file-list">
-                    {contents.map((item, index) => (
-                        <li key={`${item.name}-${index}`} className={item.type === 'FILE' ? 'file' : 'directory'}>
-                            <span
-                                className="file-name"
-                                onClick={() => {
-                                    if (item.type === 'FOLDER') {
-                                        onNavigate([...currentPath, item.name]);
-                                    } else {
-                                        handleDownload(item.name);
-                                    }
-                                }}
-                            >
-                                {item.name}
-                            </span>
-                            <span>{item.type}</span>
-                            <span>{item.size ? `${(item.size / 1024).toFixed(2)} KB` : '-'}</span>
-                            <span className="file-actions">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        item.type === 'FOLDER'
-                                            ? handleDeleteDirectory(item.name)
-                                            : handleDeleteFile(item.name);
-                                    }}
-                                >
-                                    Delete
-                                </button>
-                            </span>
-                        </li>
-                    ))}
-                </ul>
-            ) : (
-                <div className="no-contents">
-                    <p>No files or directories found.</p>
-                </div>
-            )}
+    <ul className="file-list">
+        {contents.map((item, index) => (
+            <li key={`${item.name}-${index}`} className={item.type === 'FILE' ? 'file' : 'directory'}>
+                <span
+                    className="file-name"
+                    onClick={() => {
+                        if (item.type === 'FOLDER') {
+                            onNavigate([...currentPath, item.name]);
+                        }
+                    }}
+                >
+                    {item.name}
+                </span>
+                <span>{item.type}</span>
+                <span>{item.size ? `${(item.size / 1024).toFixed(2)} KB` : '-'}</span>
+                <span className="file-actions">
+                    {item.type === 'FILE' && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownload(item.name);
+                            }}
+                        >
+                            Download
+                        </button>
+                    )}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            item.type === 'FOLDER'
+                                ? handleDeleteDirectory(item.name)
+                                : handleDeleteFile(item.name);
+                        }}
+                    >
+                        Delete
+                    </button>
+                </span>
+            </li>
+        ))}
+    </ul>
+    ) : (
+        <div className="no-contents">
+            <p>No files or directories found.</p>
+        </div>
+    )}
         </div>
     );
 }

@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -48,6 +50,20 @@ public class FileController {
         return fileService.deleteFile(bucketName, fileName);
     }
 
+    @GetMapping(value = "/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<Resource> downloadFile(
+        @RequestParam String fileName,
+        @RequestParam String bucketName,
+        @RequestParam(required = false, defaultValue = "") String parentDirectory
+    ) {
+        log.info("Received file download request for file: {} from bucket: {} in directory: {}", fileName, bucketName, parentDirectory);
+        Resource fileResource = fileService.downloadFile(fileName, bucketName, parentDirectory);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileResource.getFilename() + "\"")
+                .body(fileResource);
+    }
+    
     @PostMapping("directory")
     public ResponseEntity<GeneralResponse> createDirectory(
         @RequestParam String directoryName, 

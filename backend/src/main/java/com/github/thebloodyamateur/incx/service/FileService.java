@@ -1,9 +1,12 @@
 package com.github.thebloodyamateur.incx.service;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,6 +19,8 @@ import com.github.thebloodyamateur.incx.persistence.repository.MinioBucketsRepos
 import com.github.thebloodyamateur.incx.persistence.repository.MinioObjectsRepository;
 
 import io.minio.BucketExistsArgs;
+import io.minio.GetObjectArgs;
+import io.minio.GetObjectResponse;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -275,6 +280,44 @@ public class FileService {
             return objects.stream()
                 .map(obj -> new ContentResponse(obj.getName(), obj.getType().toString(), obj.getSize()))
                 .toList();
+        }
+    }
+
+    public Resource downloadFile(String fileName, String bucketName, String parentDirectory) {
+        // Find the bucket
+        MinioBucket bucket = minioBucketsRepository.findByBucketName(bucketName)
+            .orElseThrow(() -> new RuntimeException("Bucket not found."));
+
+        // Construct the final object path
+        String finalObjectPath = parentDirectory != null && !parentDirectory.isEmpty()
+            ? parentDirectory + "/" + fileName
+            : fileName;
+
+        // Find the file object
+        MinioObject minioObject = minioObjectsRepository.findByMinioBucketAndName(bucket, finalObjectPath)
+            .orElseThrow(() -> new RuntimeException("File not found in the specified bucket."));
+
+        if (minioObject.getType() != MinioObject.ObjectType.FILE) {
+            throw new RuntimeException("The specified path is not a file.");
+        }
+
+        // Download the file from MinIO
+        try {
+            GetObjectResponse response = minioClient.getObject(
+                GetObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(finalObjectPath)
+                    .build()
+            );
+
+            // Convert the MinIO response to a Spring Resource
+            InputStream inputStream = response;
+            InputStreamResource resource = new InputStreamResource(inputStream);
+            return resource;
+            
+        } catch (Exception e) {
+            log.error("Error downloading file '{}' from bucket '{}': {}", finalObjectPath, bucketName, e.getMessage());
+            throw new RuntimeException("Failed to download file: " + e.getMessage());
         }
     }
 
