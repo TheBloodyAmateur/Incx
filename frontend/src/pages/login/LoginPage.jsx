@@ -2,20 +2,40 @@ import { useState } from "react";
 import LetterGlitch from "../../components/ui/LetterGlitch";
 import SimpleNav from "../../components/ui/SimpleNav";
 import { useNavigate } from "react-router-dom";
-
 import logo from "../../assets/logo.png";
 import "./LoginPage.css";
 
 export default function LoginPage() {
     const [devMode, setDevMode] = useState(false);
-
-    const [fakePassword, setFakePassword] = useState("");
-    const [fakeUsername, setFakeUsername] = useState("");
-
+    const [password, setPassword] = useState("");
+    const [username, setUsername] = useState("");
+    const [isLogin, setIsLogin] = useState(true);
+    const [error, setError] = useState("");
     const navigate = useNavigate();
 
-    const handleLogin = () => {
-        navigate("/dashboard");
+    const handleAuth = async () => {
+        const url = isLogin ? "http://localhost:8080/api/auth/login" : "http://localhost:8080/api/auth/register";
+        const payload = { username, password };
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (response.ok) {
+                navigate(`/dashboard?username=${username}`);
+            } else {
+                const errorData = await response.json();
+                setError(errorData.message || "Authentication failed");
+            }
+        } catch (error) {
+            console.error("Error during authentication:", error);
+            setError("An error occurred during authentication. Please check the console for more details.");
+        }
     };
 
     return (
@@ -26,39 +46,36 @@ export default function LoginPage() {
                 outerVignette={true}
                 centerVignette={false}
             />
-
             <div className="logo-fixed">
                 <img src={logo} alt="incx" />
             </div>
-
             <div className="nav-wrapper">
                 <SimpleNav
                     devMode={devMode}
                     onDevModeToggle={setDevMode}
                 />
             </div>
-
             <div className="login-box">
-                <h1>{devMode ? "Login (DEV)" : "Login"}</h1>
-
+                <h1>{isLogin ? (devMode ? "Login (DEV)" : "Login") : "Register"}</h1>
+                {error && <p className="error-message">{error}</p>}
                 <label>Username</label>
                 <input
-                    type={devMode ? "text" : "password"}
-                    value={fakePassword}
-                    onChange={(e) => setFakePassword(e.target.value)}
-                    placeholder={devMode ? "Username" : "•••••••"}
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Username"
                 />
-
                 <label>Password</label>
                 <input
-                    type={devMode ? "password" : "text"}
-                    value={fakeUsername}
-                    onChange={(e) => setFakeUsername(e.target.value)}
-                    placeholder={devMode ? "••••••" : "Username"}
+                    type={devMode ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={devMode ? "Password" : "•••••••"}
                 />
-
-                <button onClick={handleLogin}>Sign In</button>
-
+                <button onClick={handleAuth}>{isLogin ? "Sign In" : "Register"}</button>
+                <p onClick={() => setIsLogin(!isLogin)} className="toggle-auth">
+                    {isLogin ? "Need an account? Register" : "Already have an account? Login"}
+                </p>
                 <a href="/forgot" className="forgot-link">
                     Forgot Password?
                 </a>

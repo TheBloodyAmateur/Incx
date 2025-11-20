@@ -95,3 +95,9 @@
     transform: translateX(-50%);
     z-index: 10;
 }
+
+.error-message {
+    color: red;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
