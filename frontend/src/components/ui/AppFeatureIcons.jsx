@@ -1,9 +1,9 @@
 import { Calendar, Folder, Cloud } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import GlassIcons from "./GlassIcons";
 import ScrambledText from "./ScrambledText";
-import { useNavigate } from "react-router-dom";
 
-export default function AppFeatureIcons({ username }) {
+export default function AppFeatureIcons() {
     const navigate = useNavigate();
 
     const items = [
@@ -15,14 +15,16 @@ export default function AppFeatureIcons({ username }) {
         {
             icon: <Folder />,
             color: "deep_sapphire",
-            label: <ScrambledText>Files</ScrambledText>,
-            onClick: () => navigate(`/filestorage?username=${username}`)
+            label: <ScrambledText>Files</ScrambledText>
         },
         {
             icon: <Cloud />,
             color: "deep_teal",
-            label: <ScrambledText>Wetter</ScrambledText>
+            label: <ScrambledText>Wetter</ScrambledText>,
+            ariaLabel: "Wetter",
+            onClick: () => navigate("/weather")
         }
     ];
+
     return <GlassIcons items={items} />;
 }

@@ -1,7 +1,8 @@
 import { createBrowserRouter } from "react-router-dom";
+
 import LoginPage from "../pages/login/LoginPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
-import FileStoragePage from "../pages/filestorage/FileStoragePage";
+import WeatherPage from "../pages/weather/WeatherPage";
 
 const router = createBrowserRouter([
     {
@@ -13,8 +14,8 @@ const router = createBrowserRouter([
         element: <DashboardPage />,
     },
     {
-        path: "/filestorage",
-        element: <FileStoragePage />,
+        path: "/weather",
+        element: <WeatherPage />,
     }
 ]);
 
