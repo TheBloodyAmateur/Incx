@@ -1,25 +1,23 @@
-import React, { useEffect, useRef } from "react";
-import { RouterProvider } from "react-router-dom";
-import router from "./routes.jsx";
-import "../styles/global.css";
+import React, { useEffect, useRef } from 'react';
 
-// --- GLOBAL CUSTOM CURSOR COMPONENT ---
+// Uses direct DOM manipulation for maximum smoothness (bypassing React render cycle)
 const CustomCursor = () => {
     const cursorRef = useRef(null);
     const dotRef = useRef(null);
 
     useEffect(() => {
         const moveCursor = (e) => {
-            // Smooth follow for outer ring
+            // Update outer ring (slight delay/smoothness could be added here later)
             if (cursorRef.current) {
                 cursorRef.current.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) translate(-50%, -50%)`;
             }
-            // Instant follow for center dot
+            // Update center dot
             if (dotRef.current) {
                 dotRef.current.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) translate(-50%, -50%)`;
             }
         };
 
+        // Add click effect listener
         const clickEffect = () => {
             if (cursorRef.current) {
                 cursorRef.current.classList.add('scale-75');
@@ -40,6 +38,11 @@ const CustomCursor = () => {
 
     return (
         <>
+            {/* Force hide default cursor everywhere */}
+            <style>{`
+        * { cursor: none !important; }
+      `}</style>
+
             {/* Outer Ring */}
             <div
                 ref={cursorRef}
@@ -54,11 +57,4 @@ const CustomCursor = () => {
     );
 };
 
-export default function App() {
-    return (
-        <>
-            <CustomCursor />
-            <RouterProvider router={router} />
-        </>
-    );
-}
+export default CustomCursor;
