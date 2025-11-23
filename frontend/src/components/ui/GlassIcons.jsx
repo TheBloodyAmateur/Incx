@@ -33,8 +33,9 @@ export default function GlassIcons({ items, className }) {
                 <button
                     key={index}
                     className={`icon-btn ${item.customClass || ""}`}
-                    aria-label={item.label}
+                    aria-label={item.ariaLabel || item.label}
                     type="button"
+                    onClick={item.onClick}
                 >
                     <span
                         className="icon-btn__back"
