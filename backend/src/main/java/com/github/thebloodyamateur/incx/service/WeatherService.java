@@ -1,7 +1,10 @@
-package com.github.thebloodyamateur.incx.weather;
+package com.github.thebloodyamateur.incx.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.thebloodyamateur.incx.dto.WeatherQuery;
+import com.github.thebloodyamateur.incx.dto.WeatherResponse;
+
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
