@@ -1,74 +1,87 @@
-.booking-wrapper {
-    width: 100vw;
+.booking-page-root {
     min-height: 100vh;
-    background-color: #1a1a1a; /* Dunkler Background passend zum Dashboard */
+    background-color: #121212;
     color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 20px;
     display: flex;
-    justify-content: center;
-    padding-top: 50px;
-    font-family: 'Arial', sans-serif;
+    flex-direction: column;
+    align-items: center;
 }
 
-.booking-container {
-    background: rgba(255, 255, 255, 0.05);
+.top-bar {
+    width: 100%;
+    max-width: 1000px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    background: #1e1e1e;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #333;
+}
+
+.today-display {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #0F6A77; /* Incx Akzent */
+}
+
+.content-split {
+    display: flex;
+    gap: 2rem;
+    width: 100%;
+    max-width: 1000px;
+    flex-wrap: wrap;
+}
+
+.form-section {
+    flex: 1;
+    min-width: 300px;
+    background: #1e1e1e;
     padding: 2rem;
     border-radius: 12px;
-    width: 100%;
-    max-width: 600px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid #333;
 }
 
-h1 {
-    text-align: center;
-    margin-bottom: 1rem;
-    color: #fff;
+.calendar-section {
+    width: 320px;
+    background: #1e1e1e;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #333;
+    height: fit-content;
 }
 
-.date-format-banner {
-    background: #46338A;
-    color: white;
-    padding: 0.5rem;
-    text-align: center;
-    margin-bottom: 2rem;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    /* F-M-1 Visualisierung */
-}
-
-.incx-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
+/* Form Styles */
 .form-group {
+    margin-bottom: 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
 }
 
-/* F-M-3: Fokus Styles für Labels */
 .focusable-label {
-    font-size: 0.9rem;
     color: #aaa;
+    margin-bottom: 0.5rem;
     outline: none;
     width: fit-content;
+    cursor: default;
+    font-size: 0.9rem;
 }
 
 .focusable-label:focus {
-    color: #0F6A77;
+    color: #fff;
     text-decoration: underline;
-    font-weight: bold;
+    color: #46338A;
 }
 
-input[type="text"],
-input[type="number"] {
+input[type="text"], input[type="number"], input[type="email"] {
+    background: #2c2c2c;
+    border: 1px solid #444;
+    color: white;
     padding: 10px;
     border-radius: 4px;
-    border: 1px solid #444;
-    background: #2a2a2a;
-    color: white;
     font-size: 1rem;
 }
 
@@ -76,142 +89,226 @@ input:focus {
     outline: 2px solid #46338A;
 }
 
-/* Slider Styles (F-M-2) */
-.slider-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: #2a2a2a;
+.error-border {
+    border-color: #ff4444 !important;
+}
+
+.err-msg {
+    color: #ff4444;
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+.info-hint {
+    font-size: 0.8rem;
+    color: #0F6A77;
+    margin-bottom: 4px;
+    font-style: italic;
+}
+
+
+.slider-wrapper {
+    text-align: center;
+    background: #2c2c2c;
     padding: 10px;
     border-radius: 4px;
 }
 
-.range-slider {
+.salutation-slider {
     width: 100%;
+    margin: 10px 0;
     cursor: pointer;
 }
 
-.slider-value {
-    margin-top: 5px;
+.slider-val {
+    color: #46338A;
     font-weight: bold;
-    color: #0F6A77;
 }
 
-/* Date Group (F-M-4) */
-.date-group {
+.date-row {
     display: flex;
-    flex-wrap: wrap;
     gap: 10px;
     justify-content: space-between;
 }
 
-.date-part {
+.date-control-wrapper {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    width: 30%;
+    min-width: 0; /* Flex fix */
 }
 
-.full-width {
-    width: 100%;
-}
-
-.sub-label {
-    font-size: 0.8rem;
-    color: #888;
-    margin-bottom: 4px;
-    outline: none;
-}
-.sub-label:focus {
-    color: #fff;
-}
-
-/* Day Controls (F-M-5) */
-.day-controls {
+.day-stepper {
     display: flex;
-    gap: 5px;
 }
 
-.day-controls button {
+.day-stepper button {
     width: 30px;
     background: #46338A;
     color: white;
     border: none;
     cursor: pointer;
-    border-radius: 4px;
+    font-weight: bold;
 }
 
-.day-input {
-    width: 50px !important;
+.day-stepper button:first-child { border-radius: 4px 0 0 4px; }
+.day-stepper button:last-child { border-radius: 0 4px 4px 0; }
+
+.day-input-readonly {
+    width: 100%;
     text-align: center;
-    cursor: not-allowed; /* Visualisiert ReadOnly */
+    pointer-events: none; /* Readonly logic visual */
+    border-radius: 0 !important;
 }
 
-/* Month Suggestions (F-M-6) */
-.relative {
-    position: relative;
-}
 
-.month-suggestions {
+.relative { position: relative; }
+
+.month-suggestions-list, .city-suggestions-list {
     position: absolute;
     top: 100%;
-    left: 0;
-    right: 0;
+    left: 0; right: 0;
     background: #333;
-    border: 1px solid #555;
     list-style: none;
     padding: 0;
     margin: 0;
-    z-index: 100;
-    max-height: 150px;
-    overflow-y: auto;
+    z-index: 50;
+    border: 1px solid #555;
 }
 
-.month-suggestions li {
+.month-suggestions-list li, .city-suggestions-list li {
     padding: 8px;
     border-bottom: 1px solid #444;
-    cursor: help; /* Zeigt an, dass man es nur anschauen soll */
+    cursor: pointer;
 }
 
-.month-suggestions li:hover {
+.month-suggestions-list li:hover, .city-suggestions-list li:hover {
     background: #444;
 }
 
-/* Error handling */
-.error-border {
-    border-color: #ff4444 !important;
+
+.year-scroll-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #2c2c2c;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #444;
 }
 
-.error-msg {
-    color: #ff4444;
-    font-size: 0.8rem;
+.year-display {
+    font-size: 1rem;
+    font-weight: bold;
+    min-width: 50px;
+    text-align: center;
 }
 
-.info-hint {
-    color: #0F6A77;
-    font-size: 0.8rem;
-    font-style: italic;
+.scroll-bar-container {
+    flex: 1;
+    height: 10px;
+    background: #111;
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
 }
 
+.scroll-bar-fill {
+    height: 100%;
+    transition: width 0.1s;
+}
+
+/* Submit Button */
 .submit-btn {
-    margin-top: 1rem;
+    width: 100%;
     padding: 15px;
-    background: linear-gradient(45deg, #46338A, #0F6A77);
+    background: linear-gradient(90deg, #46338A, #0F6A77);
     color: white;
     border: none;
     border-radius: 6px;
     font-size: 1.1rem;
     cursor: pointer;
-    transition: transform 0.1s;
+    margin-top: 1rem;
 }
 
-.submit-btn:active {
-    transform: scale(0.98);
+.submit-btn:hover { opacity: 0.9; }
+
+.city-row {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
 }
 
-.error-summary {
-    background: rgba(255, 0, 0, 0.1);
-    border: 1px solid red;
-    padding: 10px;
+
+/* Calendar Styles (Right Side) */
+.mini-calendar {
+    color: #ddd;
+}
+
+.cal-header {
     text-align: center;
-    border-radius: 4px;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    color: #fff;
 }
+
+.cal-grid-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.cal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.cal-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.cal-cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #2a2a2a;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.cal-cell.today {
+    border: 2px solid #0F6A77; /* Incx Cyan */
+    color: #fff;
+    font-weight: bold;
+}
+
+.cal-cell.booked {
+    background-color: #8a3333; /* Rot für belegt */
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+.cal-legend {
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.dot {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.today-dot { border: 2px solid #0F6A77; }
+.booked-dot { background: #8a3333; }

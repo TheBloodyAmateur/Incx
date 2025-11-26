@@ -1,472 +1,473 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import "./BookingPage.css";
 
-// Einfache Liste der Monate für die Vorschläge
-const MONTHS = [
+// --- DATEN ---
+const MONTH_NAMES = [
   "JANUAR", "FEBRUAR", "MÄRZ", "APRIL", "MAI", "JUNI",
   "JULI", "AUGUST", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DEZEMBER"
 ];
 
-export default function BookingPage() {
-  const [dateFormat, setDateFormat] = useState("");
+const AUSTRIA_CITIES = [
+    { name: "Wien", zip: "1010" },
+    { name: "Graz", zip: "8010" },
+    { name: "Linz", zip: "4020" },
+    { name: "Salzburg", zip: "5020" },
+    { name: "Innsbruck", zip: "6020" },
+    { name: "Klagenfurt", zip: "9020" },
+    { name: "Villach", zip: "9500" },
+    { name: "Wels", zip: "4600" },
+    { name: "St. Pölten", zip: "3100" },
+    { name: "Dornbirn", zip: "6850" }
+];
 
-  // Initialer State für das Formular
+// --- HELPER ---
+const getDaysInMonth = (month, year) => new Date(year, month, 0).getDate();
+const getFirstDayOfMonth = (month, year) => {
+  let day = new Date(year, month - 1, 1).getDay();
+  return day === 0 ? 6 : day - 1;
+};
+
+// --- COOKIE HELPERS  ---
+const saveBooking = (dateStr) => {
+  const existing = JSON.parse(sessionStorage.getItem('incx_bookings') || '[]');
+  existing.push(dateStr);
+  sessionStorage.setItem('incx_bookings', JSON.stringify(existing));
+};
+
+const getBookings = () => {
+  return JSON.parse(sessionStorage.getItem('incx_bookings') || '[]');
+};
+
+export default function BookingPage() {
+  const [dateFormat, setDateFormat] = useState("DE"); 
+  const [currentDateString, setCurrentDateString] = useState("");
+  const [bookedDates, setBookedDates] = useState([]);
+  const [tabIndices, setTabIndices] = useState({}); 
+
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+
   const initialFormState = {
-    salutation: 1, // 0: Herr, 1: Frau, 2: Keine Angabe (Start in der Mitte für Slider)
+    salutation: 1, 
     firstName: "",
     lastName: "",
     email: "",
     day: 1,
-    month: "",
-    year: ""
+    month: "", 
+    year: 2000,
+    zip: "",     
+    city: ""     
   };
-
   const [formData, setFormData] = useState(initialFormState);
   
-  // State für UI-Logik
+  // UI Logik
   const [monthSuggestions, setMonthSuggestions] = useState([]);
-  const [isSubmitted, setIsSubmitted] = useState(false); 
+  const [citySuggestions, setCitySuggestions] = useState([]); 
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState({});
 
+  // Scroll Logik (Jahr)
+  const [scrollProgress, setScrollProgress] = useState(0); // -20 bis +20
+  const SCROLL_THRESHOLD = 20;
 
   useEffect(() => {
-    const formats = ["MM/DD/YYYY", "DD.MM.YYYY", "YYYY-MM-DD", "DD/MM/YYYY"];
-    const randomFormat = formats[Math.floor(Math.random() * formats.length)];
-    setDateFormat(randomFormat);
+    // Format Logik
+    const formats = [
+      { code: "DE", label: "DD.MM.YYYY" }, 
+      { code: "US", label: "MM/DD/YYYY" }, 
+      { code: "ISO", label: "YYYY-MM-DD" }
+    ];
+    const selected = formats[Math.floor(Math.random() * formats.length)];
+    setDateFormat(selected.code);
+
+    const d = String(today.getDate()).padStart(2, '0');
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const y = today.getFullYear();
+    
+    let dateStr = "";
+    if (selected.code === "DE") dateStr = `${d}.${m}.${y}`;
+    else if (selected.code === "US") dateStr = `${m}/${d}/${y}`;
+    else dateStr = `${y}-${m}-${d}`;
+    
+    setCurrentDateString(dateStr);
+    setBookedDates(getBookings());
+
+ 
+    const controlNames = [
+        "salutation", 
+        "firstName", 
+        "lastName", 
+        "zip", 
+        "city", 
+        "email", 
+        "day", 
+        "month", 
+        "year", 
+        "submit" 
+    ];
+    // Alphabetisch sortieren
+    controlNames.sort();
+    
+    // Map erstellen: Name -> Index (Start bei 1)
+    const indices = {};
+    controlNames.forEach((name, index) => {
+        indices[name] = index + 1;
+    });
+    setTabIndices(indices);
+
   }, []);
 
-  // Hilfsfunktion: Slider-Wert in Text umwandeln 
+
   const getSalutationLabel = (val) => {
     if (val == 0) return "Herr";
     if (val == 1) return "Frau";
     return "Keine Angabe";
   };
 
-  // Handler für Änderungen
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
 
-
+    // Monat Vorschläge
     if (name === "month") {
-      if (value.trim() === "") {
-        setMonthSuggestions([]);
-      } else {
-        const filtered = MONTHS.filter(m => m.includes(value.toUpperCase()));
-        setMonthSuggestions(filtered);
-      }
+      if (value.trim() === "") setMonthSuggestions([]);
+      else setMonthSuggestions(MONTH_NAMES.filter(m => m.includes(value.toUpperCase())));
+    }
+
+
+    if (name === "city") {
+        if (value.trim() === "") {
+            setCitySuggestions([]);
+        } else {
+            // Case insensitive search
+            const filtered = AUSTRIA_CITIES.filter(c => 
+                c.name.toLowerCase().includes(value.toLowerCase())
+            );
+            setCitySuggestions(filtered);
+        }
     }
   };
 
 
-  // Eingabe vor/nach @ erst möglich, wenn @ existiert.
-  const handleEmailKeyDown = (e) => {
-    // Erlaube Steuertasten (Backspace, Tab, Arrows, etc.)
-    if (e.key.length > 1) return;
+  const selectCity = (cityName) => {
+      setFormData(prev => ({ 
+          ...prev, 
+          city: cityName,
+          zip: "" //PLZ WIRD GELEERT
+      }));
+      setCitySuggestions([]);
+  };
 
+  const handleEmailKeyDown = (e) => {
+    if (e.key.length > 1) return; 
     const hasAt = formData.email.includes('@');
-    
-    // Wenn kein @ da ist, und die gedrückte Taste nicht @ ist -> Blockieren
-    if (!hasAt && e.key !== '@') {
-      e.preventDefault();
-      alert("Hoppla! Du  mussterst das '@' eingeben, bevor du den Rest schreiben darfst.");
-    }
+    if (!hasAt && e.key !== '@') e.preventDefault();
   };
 
   const adjustDay = (delta) => {
     setFormData(prev => {
-      let newDay = prev.day + delta;
+      let newDay = parseInt(prev.day) + delta;
       if (newDay < 1) newDay = 1;
       if (newDay > 31) newDay = 31;
       return { ...prev, day: newDay };
     });
   };
 
-  //  Klick auf Monat-Vorschlag darf NICHT füllen
-  const handleMonthSuggestionClick = (e) => {
-    e.preventDefault();
-    // Wir tun absichtlich nichts oder geben einen nervigen Alert
-    // Damit muss der User es manuell tippen.
+  const handleMonthSuggestionClick = (e) => e.preventDefault();
+
+ 
+  const handleYearScroll = (e) => {
+      // Verhindern, dass die ganze Seite scrollt
+      e.preventDefault();
+      
+      // Delta Y: positiv = runterscrollen, negativ = hochscrollen
+      const delta = e.deltaY > 0 ? -1 : 1; 
+
+      setScrollProgress(prev => {
+          let next = prev + delta;
+          
+          // Limitieren und Trigger prüfen
+          if (next >= SCROLL_THRESHOLD) {
+              // +1 Jahr
+              setFormData(f => ({ ...f, year: f.year + 1 }));
+              return 0; // Reset
+          } else if (next <= -SCROLL_THRESHOLD) {
+              // -1 Jahr
+              setFormData(f => ({ ...f, year: f.year - 1 }));
+              return 0; // Reset
+          }
+          
+          return next;
+      });
   };
 
-  // Validierung
   const validate = () => {
     const newErrors = {};
-    
-
-    if (!MONTHS.includes(formData.month.toUpperCase())) {
-      newErrors.month = "Der Monat muss exakt ausgeschrieben sein (wie im Vorschlag).";
-    }
-
+    if (!MONTH_NAMES.includes(formData.month.toUpperCase())) newErrors.month = "Monat muss exakt ausgeschrieben sein.";
     if (!formData.firstName) newErrors.firstName = "Name fehlt.";
     if (!formData.lastName) newErrors.lastName = "Nachname fehlt.";
+    if (!formData.zip) newErrors.zip = "PLZ fehlt.";
+    if (!formData.city) newErrors.city = "Ort fehlt.";
     
-    if (!formData.email.includes('@')) {
-      newErrors.email = "E-Mail muss ein @ enthalten.";
-    }
-    // Check auf Local/Domain Part Existenz
-    const parts = formData.email.split('@');
-    if (parts.length < 2 || parts[0] === "" || parts[1] === "") {
-        newErrors.email = "E-Mail unvollständig (Zeichen vor und nach @ nötig).";
+    if (!formData.email.includes('@')) newErrors.email = "E-Mail muss ein @ enthalten.";
+    else {
+      const parts = formData.email.split('@');
+      if (parts[0] === "" || parts[1] === "") newErrors.email = "E-Mail unvollständig.";
     }
 
     if (!formData.year) newErrors.year = "Jahr fehlt.";
-
     return newErrors;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Validieren
     const validationErrors = validate();
     setErrors(validationErrors);
-    setIsSubmitted(true); 
+    setIsSubmitted(true);
 
     if (Object.keys(validationErrors).length === 0) {
-      // Erfolg simulation
-      alert(`Termin erfolgreich gebucht für den ${formData.day}. ${formData.month} ${formData.year}!`);
-    } else {
-      // Fehlschlag simulation
-      alert("Fehler bei der Buchung. Bitte korrigieren.");
-    }
+      const monthIndex = MONTH_NAMES.indexOf(formData.month.toUpperCase()) + 1;
+      const mStr = String(monthIndex).padStart(2, '0');
+      const dStr = String(formData.day).padStart(2, '0');
+      const bookingIso = `${formData.year}-${mStr}-${dStr}`;
 
+      saveBooking(bookingIso);
+      setBookedDates(getBookings());
+      alert(`Termin gebucht für: ${bookingIso} in ${formData.zip} ${formData.city}`);
+    } else {
+      alert("Fehlerhafte Eingaben. Bitte prüfen.");
+    }
     setFormData(initialFormState);
     setMonthSuggestions([]);
-    // Fehler bleiben sichtbar (da isSubmitted true ist), aber Felder sind leer -> Maximale Verwirrung
+    setCitySuggestions([]);
+    setScrollProgress(0);
+  };
+
+  const enableInput = (e) => e.target.removeAttribute('readonly');
+
+
+  const renderDayInput = () => (
+    <div className="date-control-wrapper" key="day">
+      <label tabIndex={tabIndices['day']} className="focusable-label">Tag</label>
+      <div className="day-stepper">
+        <button type="button" tabIndex={-1} onClick={() => adjustDay(-1)}>-</button>
+        <input type="number" value={formData.day} readOnly className="day-input-readonly" tabIndex={-1} />
+        <button type="button" tabIndex={-1} onClick={() => adjustDay(1)}>+</button>
+      </div>
+    </div>
+  );
+
+  const renderMonthInput = () => (
+    <div className="date-control-wrapper relative" key="month">
+      <label tabIndex={tabIndices['month']} className="focusable-label">Monat</label>
+      <input
+        type="text" name="month" value={formData.month}
+        onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off"
+        className={isSubmitted && errors.month ? "error-border" : ""}
+        placeholder="z.B. JANUAR"
+        tabIndex={tabIndices['month']} 
+      />
+      {monthSuggestions.length > 0 && (
+        <ul className="month-suggestions-list">
+          {monthSuggestions.map(m => (
+            <li key={m} onMouseDown={handleMonthSuggestionClick} title="Klicken verboten!">{m}</li>
+          ))}
+        </ul>
+      )}
+      {isSubmitted && errors.month && <div className="err-msg">{errors.month}</div>}
+    </div>
+  );
+
+ 
+  const renderYearInput = () => {
+      // Progress Bar Style
+      const progressPercent = (Math.abs(scrollProgress) / SCROLL_THRESHOLD) * 100;
+      const barColor = scrollProgress > 0 ? '#4caf50' : '#f44336'; // Grün für +, Rot für -
+
+      return (
+        <div className="date-control-wrapper" key="year">
+          <label tabIndex={tabIndices['year']} className="focusable-label">Jahr (Scrollen)</label>
+          <div 
+            className="year-scroll-container" 
+            onWheel={handleYearScroll}
+            title="Mausrad benutzen zum Ändern (+/- 20 Ticks)"
+            tabIndex={tabIndices['year']} 
+          >
+              <div className="year-display">{formData.year}</div>
+              <div className="scroll-bar-container">
+                  <div 
+                    className="scroll-bar-fill" 
+                    style={{
+                        width: `${progressPercent}%`,
+                        backgroundColor: barColor,
+                        marginLeft: scrollProgress < 0 ? 'auto' : '0' 
+                    }}
+                  />
+              </div>
+          </div>
+          {isSubmitted && errors.year && <div className="err-msg">{errors.year}</div>}
+        </div>
+      );
+  };
+
+  const getDateInputs = () => {
+    const inputs = [];
+    if (dateFormat === "US") {
+      inputs.push(renderMonthInput()); inputs.push(renderDayInput()); inputs.push(renderYearInput());
+    } else if (dateFormat === "ISO") {
+      inputs.push(renderYearInput()); inputs.push(renderMonthInput()); inputs.push(renderDayInput());
+    } else {
+      inputs.push(renderDayInput()); inputs.push(renderMonthInput()); inputs.push(renderYearInput());
+    }
+    return inputs;
+  };
+
+  const renderCalendar = () => {
+    const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+    const startDay = getFirstDayOfMonth(currentMonth, currentYear); 
+    const weeks = [];
+    let dayCount = 1;
+    for (let i = 0; i < 6; i++) {
+      const week = [];
+      for (let j = 0; j < 7; j++) {
+        if ((i === 0 && j < startDay) || dayCount > daysInMonth) week.push(null); 
+        else {
+          const isToday = dayCount === today.getDate();
+          const checkIso = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(dayCount).padStart(2,'0')}`;
+          week.push({ day: dayCount, isToday, isBooked: bookedDates.includes(checkIso) });
+          dayCount++;
+        }
+      }
+      weeks.push(week);
+      if (dayCount > daysInMonth) break;
+    }
+    return (
+      <div className="mini-calendar">
+        <div className="cal-header">{MONTH_NAMES[currentMonth-1]} {currentYear}</div>
+        <div className="cal-grid-header"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
+        <div className="cal-body">
+          {weeks.map((week, wIdx) => (
+            <div key={wIdx} className="cal-row">
+              {week.map((cell, dIdx) => (
+                <div key={dIdx} className={`cal-cell ${cell?.isToday?'today':''} ${cell?.isBooked?'booked':''}`}>{cell?cell.day:''}</div>
+              ))}
+            </div>
+          ))}
+        </div>
+        <div className="cal-legend"><span className="dot today-dot"></span> Heute <span className="dot booked-dot"></span> Gebucht</div>
+      </div>
+    );
   };
 
   return (
-    <div className="booking-wrapper">
-        <style>{`
-            .booking-wrapper {
-                width: 100vw;
-                min-height: 100vh;
-                background-color: #1a1a1a;
-                color: #e0e0e0;
-                display: flex;
-                justify-content: center;
-                padding-top: 50px;
-                font-family: 'Arial', sans-serif;
-            }
-            .booking-container {
-                background: rgba(255, 255, 255, 0.05);
-                padding: 2rem;
-                border-radius: 12px;
-                width: 100%;
-                max-width: 600px;
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            h1 {
-                text-align: center;
-                margin-bottom: 1rem;
-                color: #fff;
-            }
-            .date-format-banner {
-                background: #46338A;
-                color: white;
-                padding: 0.5rem;
-                text-align: center;
-                margin-bottom: 2rem;
-                border-radius: 4px;
-                font-size: 0.9rem;
-            }
-            .incx-form {
-                display: flex;
-                flex-direction: column;
-                gap: 1.5rem;
-            }
-            .form-group {
-                display: flex;
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-            .focusable-label {
-                font-size: 0.9rem;
-                color: #aaa;
-                outline: none;
-                width: fit-content;
-            }
-            .focusable-label:focus {
-                color: #0F6A77;
-                text-decoration: underline;
-                font-weight: bold;
-            }
-            input[type="text"],
-            input[type="number"] {
-                padding: 10px;
-                border-radius: 4px;
-                border: 1px solid #444;
-                background: #2a2a2a;
-                color: white;
-                font-size: 1rem;
-            }
-            input:focus {
-                outline: 2px solid #46338A;
-            }
-            .slider-container {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                background: #2a2a2a;
-                padding: 10px;
-                border-radius: 4px;
-            }
-            .range-slider {
-                width: 100%;
-                cursor: pointer;
-            }
-            .slider-value {
-                margin-top: 5px;
-                font-weight: bold;
-                color: #0F6A77;
-            }
-            .date-group {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 10px;
-                justify-content: space-between;
-            }
-            .date-part {
-                display: flex;
-                flex-direction: column;
-                width: 30%;
-            }
-            .full-width {
-                width: 100%;
-            }
-            .sub-label {
-                font-size: 0.8rem;
-                color: #888;
-                margin-bottom: 4px;
-                outline: none;
-            }
-            .sub-label:focus {
-                color: #fff;
-            }
-            .day-controls {
-                display: flex;
-                gap: 5px;
-            }
-            .day-controls button {
-                width: 30px;
-                background: #46338A;
-                color: white;
-                border: none;
-                cursor: pointer;
-                border-radius: 4px;
-            }
-            .day-input {
-                width: 50px !important;
-                text-align: center;
-                cursor: not-allowed;
-            }
-            .relative {
-                position: relative;
-            }
-            .month-suggestions {
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background: #333;
-                border: 1px solid #555;
-                list-style: none;
-                padding: 0;
-                margin: 0;
-                z-index: 100;
-                max-height: 150px;
-                overflow-y: auto;
-            }
-            .month-suggestions li {
-                padding: 8px;
-                border-bottom: 1px solid #444;
-                cursor: help;
-            }
-            .month-suggestions li:hover {
-                background: #444;
-            }
-            .error-border {
-                border-color: #ff4444 !important;
-            }
-            .error-msg {
-                color: #ff4444;
-                font-size: 0.8rem;
-            }
-            .info-hint {
-                color: #0F6A77;
-                font-size: 0.8rem;
-                font-style: italic;
-            }
-            .submit-btn {
-                margin-top: 1rem;
-                padding: 15px;
-                background: linear-gradient(45deg, #46338A, #0F6A77);
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-size: 1.1rem;
-                cursor: pointer;
-                transition: transform 0.1s;
-            }
-            .submit-btn:active {
-                transform: scale(0.98);
-            }
-            .error-summary {
-                background: rgba(255, 0, 0, 0.1);
-                border: 1px solid red;
-                padding: 10px;
-                text-align: center;
-                border-radius: 4px;
-            }
-        `}</style>
-      <div className="booking-container">
-        <h1>Termin buchen</h1>
-    
-        <div className="date-format-banner">
-          Heutiges Datumsformat: <strong>{dateFormat}</strong>
+    <div className="booking-page-root">
+      <div className="top-bar">
+        <h2>Terminbuchung</h2>
+        <div className="today-display">Heute: {currentDateString}</div>
+      </div>
+
+      <div className="content-split">
+        <div className="form-section">
+            <form onSubmit={handleSubmit} autoComplete="off">
+                <input type="text" style={{display: 'none'}} />
+                <input type="password" style={{display: 'none'}} />
+
+                <div className="form-group">
+            
+                    <label tabIndex={tabIndices['salutation']} className="focusable-label">Anrede</label>
+                    <div className="slider-wrapper">
+                        <input 
+                            type="range" min="0" max="2" step="1" 
+                            name="salutation" value={formData.salutation} 
+                            onChange={handleChange} className="salutation-slider"
+                            tabIndex={tabIndices['salutation']}
+                        />
+                        <div className="slider-val">{getSalutationLabel(formData.salutation)}</div>
+                    </div>
+                </div>
+
+                <div className="form-group">
+                    <label tabIndex={tabIndices['firstName']} className="focusable-label">Name</label>
+                    <input 
+                        type="text" name="firstName" value={formData.firstName} 
+                        onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off" 
+                        className={isSubmitted && errors.firstName ? "error-border" : ""}
+                        tabIndex={tabIndices['firstName']}
+                    />
+                    {isSubmitted && errors.firstName && <div className="err-msg">{errors.firstName}</div>}
+                </div>
+
+                <div className="form-group">
+                    <label tabIndex={tabIndices['lastName']} className="focusable-label">Nachname</label>
+                    <input 
+                        type="text" name="lastName" value={formData.lastName} 
+                        onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off" 
+                        className={isSubmitted && errors.lastName ? "error-border" : ""}
+                        tabIndex={tabIndices['lastName']}
+                    />
+                    {isSubmitted && errors.lastName && <div className="err-msg">{errors.lastName}</div>}
+                </div>
+
+       
+                <div className="form-group" >
+                   <div className="city-row">
+                    <div >
+                        <label tabIndex={tabIndices['zip']} className="focusable-label">PLZ  </label>
+                        <input 
+                            type="number" name="zip" value={formData.zip} 
+                            onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off"
+                            className={isSubmitted && errors.zip ? "error-border" : ""}
+                            tabIndex={tabIndices['zip']}
+                        />
+                        {isSubmitted && errors.zip && <div className="err-msg">{errors.zip}</div>}
+                    </div>
+                    
+                    <div >
+                        <label tabIndex={tabIndices['city']} className="focusable-label">Ort  </label>
+                        <input 
+                            type="text" name="city" value={formData.city} 
+                            onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off"
+                            className={isSubmitted && errors.city ? "error-border" : ""}
+                            tabIndex={tabIndices['city']}
+                        />
+        
+                        {citySuggestions.length > 0 && (
+                            <ul className="city-suggestions-list">
+                                {citySuggestions.map(c => (
+                                    <li key={c.zip} onClick={() => selectCity(c.name)}>
+                                        {c.name} ({c.zip})
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                        {isSubmitted && errors.city && <div className="err-msg">{errors.city}</div>}
+                    </div>
+                    </div>
+                </div>
+
+                <div className="form-group">
+                    <label tabIndex={tabIndices['email']} className="focusable-label">E-Mail</label>
+                    {!formData.email && <div className="info-hint">Hinweis: Eine E-Mail muss ein @ enthalten.</div>}
+                    <input 
+                        type="text" name="email" value={formData.email} 
+                        onChange={handleChange} onKeyDown={handleEmailKeyDown} 
+                        onFocus={enableInput} readOnly autoComplete="off" 
+                        placeholder="Tippe zuerst @" className={isSubmitted && errors.email ? "error-border" : ""}
+                        tabIndex={tabIndices['email']}
+                    />
+                    {isSubmitted && errors.email && <div className="err-msg">{errors.email}</div>}
+                </div>
+
+                <div className="form-group">
+                    <label tabIndex={0} className="focusable-label" style={{width:'100%'}}>Wunschtermin</label>
+                    <div className="date-row">{getDateInputs()}</div>
+                </div>
+
+                <button type="submit" className="submit-btn" tabIndex={tabIndices['submit']}>Termin verbindlich anfragen</button>
+            </form>
         </div>
-
-        <form onSubmit={handleSubmit} className="incx-form">
-          
-     
-          <div className="form-group">
-           
-            <label tabIndex="0" className="focusable-label">Anrede</label>
-            <div className="slider-container">
-              <input 
-                type="range" 
-                min="0" 
-                max="2" 
-                step="1"
-                name="salutation"
-                value={formData.salutation}
-                onChange={handleChange}
-                className="range-slider"
-              />
-              <div className="slider-value">
-                {getSalutationLabel(formData.salutation)}
-              </div>
-            </div>
-          </div>
-
-   
-          <div className="form-group">
-            <label tabIndex="0" htmlFor="firstName" className="focusable-label">Name</label>
-            <input
-              type="text"
-              id="firstName"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              className={isSubmitted && errors.firstName ? "error-border" : ""}
-            />
-            {isSubmitted && errors.firstName && <span className="error-msg">{errors.firstName}</span>}
-          </div>
-
-        
-          <div className="form-group">
-            <label tabIndex="0" htmlFor="lastName" className="focusable-label">Nachname</label>
-            <input
-              type="text"
-              id="lastName"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              className={isSubmitted && errors.lastName ? "error-border" : ""}
-            />
-            {isSubmitted && errors.lastName && <span className="error-msg">{errors.lastName}</span>}
-          </div>
-
-      
-          <div className="form-group">
-            <label tabIndex="0" htmlFor="email" className="focusable-label">E-Mail</label>
-      
-            {!formData.email && <span className="info-hint">Hinweis: Eine E-Mail muss ein @ enthalten.</span>}
-            
-            <input
-              type="text"
-              id="email"
-              name="email"
-              value={formData.email}
-              onKeyDown={handleEmailKeyDown} // Die "erst das @" Logik
-              onChange={handleChange}
-              placeholder="Erst @ tippen..."
-              className={isSubmitted && errors.email ? "error-border" : ""}
-            />
-            {isSubmitted && errors.email && <span className="error-msg">{errors.email}</span>}
-          </div>
-
-        
-          <div className="form-group date-group">
-            <label tabIndex="0" className="focusable-label full-width">Wunschtermin</label>
-            
-          
-            <div className="date-part">
-              <label tabIndex="0" className="sub-label">Tag</label>
-              <div className="day-controls">
-                <button type="button" onClick={() => adjustDay(-1)}>-</button>
-                <input 
-                  type="number" 
-                  value={formData.day} 
-                  readOnly 
-                  className="day-input"
-                />
-                <button type="button" onClick={() => adjustDay(1)}>+</button>
-              </div>
-            </div>
-
-
-            <div className="date-part relative">
-              <label tabIndex="0" className="sub-label">Monat</label>
-              <input
-                type="text"
-                name="month"
-                value={formData.month}
-                onChange={handleChange}
-                autoComplete="off"
-                className={isSubmitted && errors.month ? "error-border" : ""}
-              />
-              {monthSuggestions.length > 0 && (
-                <ul className="month-suggestions">
-                  {monthSuggestions.map(m => (
-                    <li 
-                      key={m} 
-                      onClick={handleMonthSuggestionClick} 
-                      title="Nicht klicken! Selber tippen!"
-                    >
-                      {m}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {isSubmitted && errors.month && <span className="error-msg">{errors.month}</span>}
-            </div>
-
-  
-            <div className="date-part">
-              <label tabIndex="0" className="sub-label">Jahr</label>
-              <input
-                type="number"
-                name="year"
-                value={formData.year}
-                onChange={handleChange}
-                className={isSubmitted && errors.year ? "error-border" : ""}
-              />
-              {isSubmitted && errors.year && <span className="error-msg">{errors.year}</span>}
-            </div>
-          </div>
-
-          <button type="submit" className="submit-btn">Termin verbindlich anfragen</button>
-
-          
-          {isSubmitted && Object.keys(errors).length > 0 && (
-            <div className="error-summary">
-              <p>Es sind Fehler aufgetreten (siehe oben).</p>
-            </div>
-          )}
-
-        </form>
+        <div className="calendar-section">{renderCalendar()}</div>
       </div>
     </div>
   );
