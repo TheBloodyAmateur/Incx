@@ -16,7 +16,6 @@ const gradientMapping = {
     deep_magenta: "linear-gradient(135deg, #B62482, #6A1666)",
     deep_sapphire: "linear-gradient(135deg, #005A9C, #003F6B)",
     deep_teal: "linear-gradient(135deg, #008F7A, #005F59)"
-
 };
 
 export default function GlassIcons({ items, className }) {
@@ -33,8 +32,9 @@ export default function GlassIcons({ items, className }) {
                 <button
                     key={index}
                     className={`icon-btn ${item.customClass || ""}`}
-                    aria-label={item.label}
+                    aria-label={item.ariaLabel || item.label}
                     type="button"
+                    onClick={item.onClick}
                 >
                     <span
                         className="icon-btn__back"

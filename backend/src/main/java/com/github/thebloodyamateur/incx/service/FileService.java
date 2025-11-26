@@ -1,12 +1,17 @@
 package com.github.thebloodyamateur.incx.service;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.github.thebloodyamateur.incx.dto.ContentResponse;
 import com.github.thebloodyamateur.incx.dto.GeneralResponse;
 import com.github.thebloodyamateur.incx.persistence.model.MinioBucket;
 import com.github.thebloodyamateur.incx.persistence.model.MinioObject;
@@ -14,6 +19,8 @@ import com.github.thebloodyamateur.incx.persistence.repository.MinioBucketsRepos
 import com.github.thebloodyamateur.incx.persistence.repository.MinioObjectsRepository;
 
 import io.minio.BucketExistsArgs;
+import io.minio.GetObjectArgs;
+import io.minio.GetObjectResponse;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -45,47 +52,7 @@ public class FileService {
         }
     }
 
-    public boolean deleteBucket(String bucketName) {
-        log.info("Attempting to delete bucket '{}'", bucketName);
-        try {
-            boolean exists = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
-            if (!exists) {
-                log.info("Bucket '{}' does not exist.", bucketName);
-                return false;
-            }
-    
-            minioClient.removeBucket(RemoveBucketArgs.builder().bucket(bucketName).build());
-            log.info("Bucket '{}' deleted successfully.", bucketName);
-            return true;
-        } catch (Exception e) {
-            log.error("Error deleting bucket '{}': {}", bucketName, e.getMessage());
-            return false;
-        }
-    }
-
-    public boolean deleteBucketById(Long id) {
-        MinioBucket bucket = minioBucketsRepository.findById(id).orElse(null);
-        log.info("Attempting to delete bucket for ID: {}", id);
-        if(bucket == null) {
-            log.warn("No bucket found for user ID: {}", id);
-            return false;
-        }
-
-        RemoveBucketArgs args = RemoveBucketArgs.builder().bucket(bucket.getName()).build();
-
-        try {
-            minioClient.removeBucket(args);
-            log.info("Bucket '{}' deleted successfully.", bucket.getName());
-            return true;
-        } catch (Exception e) {
-            log.error("Error occurred while deleting bucket '{}': {}", bucket.getName(), e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-        
-    }
-
-    public ResponseEntity<GeneralResponse> uploadFile(MultipartFile fileData, String fileName, String bucketName) {
+    public ResponseEntity<GeneralResponse> uploadFile(MultipartFile fileData, String fileName, String bucketName, String parentDirectory) {
         try {
 
             MinioBucket bucket = minioBucketsRepository.findByBucketName(bucketName).orElse(null);
@@ -95,24 +62,53 @@ public class FileService {
                 return ResponseEntity.status(500).body(new GeneralResponse("Bucket not found."));
             }
 
+            // If parentDirectory is provided, check if it exists and is a folder
+            if(parentDirectory != null && !parentDirectory.isEmpty()) {
+                MinioObject parent = minioObjectsRepository.findByMinioBucketAndName(bucket, parentDirectory).orElse(null);
+                if(parent == null || parent.getType() != MinioObject.ObjectType.FOLDER) {
+                    log.error("Parent directory '{}' not found or is not a folder in bucket '{}'.", parentDirectory, bucketName);
+                    return ResponseEntity.status(500).body(new GeneralResponse("Parent directory not found or is not a folder."));
+                }
+            }
+
+            // Construct the final object path
+            String finalObjectPath = fileName;
+            if(parentDirectory != null && !parentDirectory.isEmpty()) {
+                finalObjectPath = parentDirectory + "/" + fileName;
+            }
+
+            log.info("Uploading file '{}' to bucket '{}' at path '{}'", fileName, bucketName, finalObjectPath);
+
+            // Upload the file to MinIO
             minioClient.putObject(
                 PutObjectArgs.builder()
                     .bucket(bucketName)
-                    .object(fileName)
+                    .object(finalObjectPath)
                     .stream(fileData.getInputStream(), fileData.getSize(), -1)
+                    .contentType(fileData.getContentType())
                     .build()
             );
-            log.info("File '{}' uploaded successfully to bucket '{}'.", fileName, bucketName);
+            log.info("File '{}' uploaded successfully to bucket '{}' at path '{}'.", fileName, bucketName, finalObjectPath);
 
+            // Find parent MinioObject if parentDirectory is provided
+            MinioObject parentObject = null;
+            if(parentDirectory != null && !parentDirectory.isEmpty()) {
+                parentObject = minioObjectsRepository.findByMinioBucketAndName(bucket, parentDirectory).orElse(null);
+            }
+
+            // Save file metadata to the database
             MinioObject minioObject = MinioObject.builder()
                 .name(fileName)
-                .minioPath(bucketName + "/" + fileName)
+                .minioPath(bucketName + "/" + finalObjectPath)
                 .size(fileData.getSize())
                 .type(MinioObject.ObjectType.FILE)
+                .parent(parentObject)
                 .build();
-            
+
             minioObject.setMinioBucket(bucket);
             minioObjectsRepository.save(minioObject);
+
+            log.info("File metadata for '{}' saved successfully in database.", fileName);
 
             return ResponseEntity.ok(new GeneralResponse("File uploaded successfully."));
         } catch (Exception e) {
@@ -263,4 +259,66 @@ public class FileService {
             return ResponseEntity.status(404).body(new GeneralResponse("Failed to delete directory."));
         }
     }
+
+    public List<ContentResponse> getContent(String bucketName, String path) {
+        log.info("Fetching content for bucket '{}' and path '{}'", bucketName, path);
+
+        MinioBucket bucket = minioBucketsRepository.findByBucketName(bucketName)
+            .orElseThrow(() -> new RuntimeException("Bucket not found"));
+
+        if (path != null && !path.isEmpty()) {
+            log.info("Fetching content for path '{}'", path);
+            List<MinioObject> objects = minioObjectsRepository.findByMinioBucketAndParent_Name(bucket, path);
+            log.info("Found {} objects in path '{}'", objects.size(), path);
+            return objects.stream()
+                .map(obj -> new ContentResponse(obj.getName(), obj.getType().toString(), obj.getSize()))
+                .toList();
+        } else {
+            log.info("No path provided. Fetching root content.");
+            List<MinioObject> objects = minioObjectsRepository.findByMinioBucketAndParentIsNull(bucket);
+            log.info("Found {} objects in root of bucket '{}'", objects.size(), bucketName);
+            return objects.stream()
+                .map(obj -> new ContentResponse(obj.getName(), obj.getType().toString(), obj.getSize()))
+                .toList();
+        }
+    }
+
+    public Resource downloadFile(String fileName, String bucketName, String parentDirectory) {
+        // Find the bucket
+        MinioBucket bucket = minioBucketsRepository.findByBucketName(bucketName)
+            .orElseThrow(() -> new RuntimeException("Bucket not found."));
+
+        // Construct the final object path
+        String finalObjectPath = parentDirectory != null && !parentDirectory.isEmpty()
+            ? parentDirectory + "/" + fileName
+            : fileName;
+
+        // Find the file object
+        MinioObject minioObject = minioObjectsRepository.findByMinioBucketAndName(bucket, finalObjectPath)
+            .orElseThrow(() -> new RuntimeException("File not found in the specified bucket."));
+
+        if (minioObject.getType() != MinioObject.ObjectType.FILE) {
+            throw new RuntimeException("The specified path is not a file.");
+        }
+
+        // Download the file from MinIO
+        try {
+            GetObjectResponse response = minioClient.getObject(
+                GetObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(finalObjectPath)
+                    .build()
+            );
+
+            // Convert the MinIO response to a Spring Resource
+            InputStream inputStream = response;
+            InputStreamResource resource = new InputStreamResource(inputStream);
+            return resource;
+            
+        } catch (Exception e) {
+            log.error("Error downloading file '{}' from bucket '{}': {}", finalObjectPath, bucketName, e.getMessage());
+            throw new RuntimeException("Failed to download file: " + e.getMessage());
+        }
+    }
+
 }

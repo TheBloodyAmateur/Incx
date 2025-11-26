@@ -1,11 +1,14 @@
 .icon-btns {
-  display: grid;
-  grid-gap: 5em;
-  grid-template-columns: repeat(2, 1fr);
-  margin: auto;
-  padding: 3em 0;
-  overflow: visible;
+  display: flex;
+  gap: 2em;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+  padding: 0;
+  margin: 0 auto;
 }
+
 
 .icon-btn {
     background-color: transparent;

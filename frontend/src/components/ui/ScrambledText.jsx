@@ -1,3 +1,4 @@
+// ScrambledText.jsx
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { SplitText } from "gsap/SplitText";
@@ -5,7 +6,7 @@ import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin";
 
 gsap.registerPlugin(SplitText, ScrambleTextPlugin);
 
-export default function ScrambledText({ children }) {
+export default function ScrambledText({ children, radius = 150 }) {
     const ref = useRef();
 
     useEffect(() => {
@@ -26,9 +27,9 @@ export default function ScrambledText({ children }) {
                 const dy = e.clientY - (r.top + r.height / 2);
                 const dist = Math.hypot(dx, dy);
 
-                if (dist < 120) {
+                if (dist < radius) {
                     gsap.to(c, {
-                        duration: 1.2 * (1 - dist / 120),
+                        duration: 1.2 * (1 - dist / radius),
                         scrambleText: { text: c.dataset.content, chars: ".:", speed: 0.5 },
                         ease: "none"
                     });
@@ -38,7 +39,7 @@ export default function ScrambledText({ children }) {
 
         root.addEventListener("pointermove", move);
         return () => root.removeEventListener("pointermove", move);
-    }, []);
+    }, [radius]);
 
     return (
         <div ref={ref}>

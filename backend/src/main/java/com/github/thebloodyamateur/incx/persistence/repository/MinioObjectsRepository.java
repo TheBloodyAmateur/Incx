@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.github.thebloodyamateur.incx.dto.ContentResponse;
 import com.github.thebloodyamateur.incx.persistence.model.MinioBucket;
 import com.github.thebloodyamateur.incx.persistence.model.MinioObject;
 
@@ -32,4 +33,6 @@ public interface MinioObjectsRepository extends JpaRepository<MinioObject, Long>
        "AND EXISTS (SELECT 1 FROM MinioObject c WHERE c.parent = o)")
     boolean folderExistsAndIsNotEmpty(@Param("minioBucket") MinioBucket minioBucket, @Param("pathName") String pathName);
 
+    List<MinioObject> findByMinioBucketAndParentIsNull(MinioBucket bucket);
+    List<MinioObject> findByMinioBucketAndParent_Name(MinioBucket bucket, String parentName);
 }
