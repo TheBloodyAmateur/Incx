@@ -439,7 +439,7 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
 
 // --- MAIN APP ---
 
-export default function App() {
+export default function App(username) {
     const [mode, setMode] = useState('normal');
     const [location, setLocation] = useState('');
     const [weatherData, setWeatherData] = useState(null);
