@@ -10,17 +10,19 @@ export default function AppFeatureIcons() {
         {
             icon: <Calendar />,
             color: "deep_magenta",
-            label: <ScrambledText>Kalender</ScrambledText>
+            label: <ScrambledText>Calender</ScrambledText>
         },
         {
             icon: <Folder />,
             color: "deep_sapphire",
-            label: <ScrambledText>Files</ScrambledText>
+            label: <ScrambledText>Files</ScrambledText>,
+            ariaLabel: "Dateiverwaltung",
+            onClick: () => navigate("/filestorage")
         },
         {
             icon: <Cloud />,
             color: "deep_teal",
-            label: <ScrambledText>Wetter</ScrambledText>,
+            label: <ScrambledText>Weather</ScrambledText>,
             ariaLabel: "Wetter",
             onClick: () => navigate("/weather")
         }
