@@ -10,7 +10,7 @@ export default function AppFeatureIcons({ username }) {
         {
             icon: <Calendar />,
             color: "deep_magenta",
-            label: <ScrambledText>Kalender</ScrambledText>
+            label: <ScrambledText>Calender</ScrambledText>
         },
         {
             icon: <Folder />,
@@ -22,7 +22,7 @@ export default function AppFeatureIcons({ username }) {
         {
             icon: <Cloud />,
             color: "deep_teal",
-            label: <ScrambledText>Wetter</ScrambledText>,
+            label: <ScrambledText>Weather</ScrambledText>,
             ariaLabel: "Wetter",
             onClick: () => navigate("/weather")
         }
