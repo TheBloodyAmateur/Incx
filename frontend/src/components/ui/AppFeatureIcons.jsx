@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import GlassIcons from "./GlassIcons";
 import ScrambledText from "./ScrambledText";
 
-export default function AppFeatureIcons() {
+export default function AppFeatureIcons({ username }) {
     const navigate = useNavigate();
 
     const items = [
@@ -15,7 +15,9 @@ export default function AppFeatureIcons() {
         {
             icon: <Folder />,
             color: "deep_sapphire",
-            label: <ScrambledText>Files</ScrambledText>
+            label: <ScrambledText>Files</ScrambledText>,
+            ariaLabel: "Dateiverwaltung",
+            onClick: () => navigate(`/filestorage?username=${username}`)
         },
         {
             icon: <Cloud />,
