@@ -4,6 +4,7 @@ import LoginPage from "../pages/login/LoginPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
 import BookingPage from "../pages/booking/BookingPage";
 import WeatherPage from "../pages/weather/WeatherPage";
+import FileStoragePage from "../pages/filestorage/FileStoragePage";
 
 const router = createBrowserRouter([
     {
@@ -17,6 +18,10 @@ const router = createBrowserRouter([
     {
         path: "/weather",
         element: <WeatherPage />,
+    },
+    {
+        path: "/filestorage",
+        element: <FileStoragePage />,
     }
     ,
     {
