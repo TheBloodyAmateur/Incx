@@ -1,10 +1,14 @@
-package com.github.thebloodyamateur.incx.weather;
+package com.github.thebloodyamateur.incx.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.github.thebloodyamateur.incx.dto.WeatherQuery;
+import com.github.thebloodyamateur.incx.dto.WeatherResponse;
+import com.github.thebloodyamateur.incx.service.WeatherService;
 
 @RestController
 @RequestMapping("/weather")

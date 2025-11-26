@@ -1,4 +1,4 @@
-package com.github.thebloodyamateur.incx.weather;
+package com.github.thebloodyamateur.incx.dto;
 
 public record WeatherResponse(
         String viewMode,

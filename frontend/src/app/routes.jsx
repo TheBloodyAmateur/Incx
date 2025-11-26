@@ -22,8 +22,7 @@ const router = createBrowserRouter([
     {
         path: "/filestorage",
         element: <FileStoragePage />,
-    }
-    ,
+    },
     {
         path: "/booking",
         element: <BookingPage />,

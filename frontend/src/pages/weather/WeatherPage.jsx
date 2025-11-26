@@ -439,7 +439,7 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
 
 // --- MAIN APP ---
 
-export default function App() {
+export default function App({ username }) {
     const [mode, setMode] = useState('normal');
     const [location, setLocation] = useState('');
     const [weatherData, setWeatherData] = useState(null);
@@ -543,7 +543,7 @@ export default function App() {
                 {/* TOP BAR */}
                 <div className="flex justify-between items-start p-8 w-full max-w-screen-2xl mx-auto">
                     <div className="flex gap-4">
-                        <button onClick={() => navigate('/dashboard')} className={`p-3 rounded-full backdrop-blur-md transition-all duration-300 border border-white/5 hover:bg-white/10 text-white/80 hover:text-white`} title="Back to Dashboard"><Home size={18} /></button>
+                        <button onClick={() => navigate(`/dashboard?username=${username}`)} className={`p-3 rounded-full backdrop-blur-md transition-all duration-300 border border-white/5 hover:bg-white/10 text-white/80 hover:text-white`} title="Back to Dashboard"><Home size={18} /></button>
                         {weatherData && (
                             <button onClick={() => setShowSearch(!showSearch)} className={`p-3 rounded-full backdrop-blur-md transition-all duration-300 border border-white/5 ${showSearch ? 'bg-white text-black' : 'bg-white/5 hover:bg-white/10 text-white'}`}><X size={18} /></button>
                         )}
