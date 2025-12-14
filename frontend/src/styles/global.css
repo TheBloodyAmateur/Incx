@@ -16,3 +16,22 @@ body {
 * {
     cursor: none !important;
 }
+
+
+.dark-scrollbar::-webkit-scrollbar {
+  width: 8px;               /* Breite des Balkens */
+}
+
+.dark-scrollbar::-webkit-scrollbar-track {
+  background: #0a0a0a;      /* Hintergrund der Leiste (fast schwarz) */
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb {
+  background: #333;         /* Der "Schieber" selbst (dunkelgrau) */
+  border-radius: 4px;       /* Runde Ecken */
+  border: 1px solid #0a0a0a; /* Kleiner Rand für sauberen Look */
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #555;         /* Etwas heller beim Drüberfahren */
+}

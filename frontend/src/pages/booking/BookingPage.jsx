@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ImprovementWrapper from '../../components/imp/ImprovementWrapper';
+import { useUX } from '../../context/UXContext'; // <--- PFAD ANPASSEN FALLS NÖTIG!
 import "./BookingPage.css";
 
 // --- DATEN ---
@@ -39,6 +41,10 @@ const getBookings = () => {
 };
 
 export default function BookingPage() {
+  // --- 1. CONTEXT HOOKS ---
+  const { highlightedId, setHighlight, hoverModeActive } = useUX();
+
+  // --- STANDARD STATE ---
   const [dateFormat, setDateFormat] = useState("DE"); 
   const [currentDateString, setCurrentDateString] = useState("");
   const [bookedDates, setBookedDates] = useState([]);
@@ -70,6 +76,32 @@ export default function BookingPage() {
   // Scroll Logik (Jahr)
   const [scrollProgress, setScrollProgress] = useState(0); // -20 bis +20
   const SCROLL_THRESHOLD = 20;
+  const yearScrollRef = useRef(null);
+
+  // --- 2. HIGHLIGHTING LOGIK ---
+  
+  // Feuert nur, wenn Scan-Modus (hoverModeActive) an ist
+  const handleMouseEnter = (id) => {
+    if (hoverModeActive) {
+      setHighlight(id);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverModeActive) {
+      setHighlight(null);
+    }
+  };
+
+  // Hilfsfunktion: Gibt CSS-Klassen zurück, wenn das Element markiert ist
+  // Wir nutzen hier Tailwind-Klassen für den grünen Ring (ring-emerald-500)
+  const getHighlightClass = (id) => {
+    if (highlightedId === id) {
+      return "ring-4 ring-emerald-500 ring-offset-2 ring-offset-[#0f0f0f] rounded transition-all duration-200 shadow-[0_0_20px_rgba(16,185,129,0.5)] z-10 relative";
+    }
+    return "transition-all duration-200 border-transparent border";
+  };
+
 
   useEffect(() => {
     // Format Logik
@@ -118,6 +150,37 @@ export default function BookingPage() {
 
   }, []);
 
+  
+   useEffect(() => {
+    const element = yearScrollRef.current;
+    if (!element) return;
+
+    const handleWheel = (e) => {
+        e.preventDefault(); 
+        
+        const delta = e.deltaY > 0 ? -1 : 1; 
+
+        setScrollProgress(prev => {
+            let next = prev + delta;
+            
+            if (next >= SCROLL_THRESHOLD) {
+                setFormData(f => ({ ...f, year: f.year + 1 }));
+                return 0; 
+            } else if (next <= -SCROLL_THRESHOLD) {
+                setFormData(f => ({ ...f, year: f.year - 1 }));
+                return 0; 
+            }
+            return next;
+        });
+    };
+
+    // Option { passive: false } ist wichtig für preventDefault()
+    element.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+        if (element) element.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
 
   const getSalutationLabel = (val) => {
     if (val == 0) return "Herr";
@@ -281,18 +344,17 @@ export default function BookingPage() {
 
  
   const renderYearInput = () => {
-      // Progress Bar Style
       const progressPercent = (Math.abs(scrollProgress) / SCROLL_THRESHOLD) * 100;
-      const barColor = scrollProgress > 0 ? '#4caf50' : '#f44336'; // Grün für +, Rot für -
+      const barColor = scrollProgress > 0 ? '#4caf50' : '#f44336'; 
 
       return (
         <div className="date-control-wrapper" key="year">
           <label tabIndex={tabIndices['year']} className="focusable-label">Jahr (Scrollen)</label>
           <div 
             className="year-scroll-container" 
-            onWheel={handleYearScroll}
+            ref={yearScrollRef} 
             title="Mausrad benutzen zum Ändern (+/- 20 Ticks)"
-            tabIndex={tabIndices['year']} 
+            tabIndex={tabIndices['year']}
           >
               <div className="year-display">{formData.year}</div>
               <div className="scroll-bar-container">
@@ -310,6 +372,7 @@ export default function BookingPage() {
         </div>
       );
   };
+
 
   const getDateInputs = () => {
     const inputs = [];
@@ -361,114 +424,132 @@ export default function BookingPage() {
   };
 
   return (
-    <div className="booking-page-root">
-      <div className="top-bar">
-        <h2>Terminbuchung</h2>
-        <div className="today-display">Heute: {currentDateString}</div>
-      </div>
-
-      <div className="content-split">
-        <div className="form-section">
-            <form onSubmit={handleSubmit} autoComplete="off">
-                <input type="text" style={{display: 'none'}} />
-                <input type="password" style={{display: 'none'}} />
-
-                <div className="form-group">
-            
-                    <label tabIndex={tabIndices['salutation']} className="focusable-label">Anrede</label>
-                    <div className="slider-wrapper">
-                        <input 
-                            type="range" min="0" max="2" step="1" 
-                            name="salutation" value={formData.salutation} 
-                            onChange={handleChange} className="salutation-slider"
-                            tabIndex={tabIndices['salutation']}
-                        />
-                        <div className="slider-val">{getSalutationLabel(formData.salutation)}</div>
-                    </div>
-                </div>
-
-                <div className="form-group">
-                    <label tabIndex={tabIndices['firstName']} className="focusable-label">Name</label>
-                    <input 
-                        type="text" name="firstName" value={formData.firstName} 
-                        onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off" 
-                        className={isSubmitted && errors.firstName ? "error-border" : ""}
-                        tabIndex={tabIndices['firstName']}
-                    />
-                    {isSubmitted && errors.firstName && <div className="err-msg">{errors.firstName}</div>}
-                </div>
-
-                <div className="form-group">
-                    <label tabIndex={tabIndices['lastName']} className="focusable-label">Nachname</label>
-                    <input 
-                        type="text" name="lastName" value={formData.lastName} 
-                        onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off" 
-                        className={isSubmitted && errors.lastName ? "error-border" : ""}
-                        tabIndex={tabIndices['lastName']}
-                    />
-                    {isSubmitted && errors.lastName && <div className="err-msg">{errors.lastName}</div>}
-                </div>
-
-       
-                <div className="form-group" >
-                   <div className="city-row">
-                    <div >
-                        <label tabIndex={tabIndices['zip']} className="focusable-label">PLZ  </label>
-                        <input 
-                            type="number" name="zip" value={formData.zip} 
-                            onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off"
-                            className={isSubmitted && errors.zip ? "error-border" : ""}
-                            tabIndex={tabIndices['zip']}
-                        />
-                        {isSubmitted && errors.zip && <div className="err-msg">{errors.zip}</div>}
-                    </div>
-                    
-                    <div >
-                        <label tabIndex={tabIndices['city']} className="focusable-label">Ort  </label>
-                        <input 
-                            type="text" name="city" value={formData.city} 
-                            onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off"
-                            className={isSubmitted && errors.city ? "error-border" : ""}
-                            tabIndex={tabIndices['city']}
-                        />
-        
-                        {citySuggestions.length > 0 && (
-                            <ul className="city-suggestions-list">
-                                {citySuggestions.map(c => (
-                                    <li key={c.zip} onClick={() => selectCity(c.name)}>
-                                        {c.name} ({c.zip})
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                        {isSubmitted && errors.city && <div className="err-msg">{errors.city}</div>}
-                    </div>
-                    </div>
-                </div>
-
-                <div className="form-group">
-                    <label tabIndex={tabIndices['email']} className="focusable-label">E-Mail</label>
-                    {!formData.email && <div className="info-hint">Hinweis: Eine E-Mail muss ein @ enthalten.</div>}
-                    <input 
-                        type="text" name="email" value={formData.email} 
-                        onChange={handleChange} onKeyDown={handleEmailKeyDown} 
-                        onFocus={enableInput} readOnly autoComplete="off" 
-                        placeholder="Tippe zuerst @" className={isSubmitted && errors.email ? "error-border" : ""}
-                        tabIndex={tabIndices['email']}
-                    />
-                    {isSubmitted && errors.email && <div className="err-msg">{errors.email}</div>}
-                </div>
-
-                <div className="form-group">
-                    <label tabIndex={0} className="focusable-label" style={{width:'100%'}}>Wunschtermin</label>
-                    <div className="date-row">{getDateInputs()}</div>
-                </div>
-
-                <button type="submit" className="submit-btn" tabIndex={tabIndices['submit']}>Termin verbindlich anfragen</button>
-            </form>
+    <ImprovementWrapper>
+      <div className="booking-page-root">
+        <div className="top-bar">
+          <h2>Terminbuchung</h2>
+          <div className="today-display">Heute: {currentDateString}</div>
         </div>
-        <div className="calendar-section">{renderCalendar()}</div>
+
+        <div className="content-split">
+          <div className="form-section">
+              <form onSubmit={handleSubmit} autoComplete="off">
+                  <input type="text" style={{display: 'none'}} />
+                  <input type="password" style={{display: 'none'}} />
+
+                  <div className="form-group">
+              
+                      <label tabIndex={tabIndices['salutation']} className="focusable-label">Anrede</label>
+                      
+                      {/* --- 3. TARGET: ANREDE SLIDER --- */}
+                      {/* Hier fügen wir die Klasse und Events für das Highlighting hinzu */}
+                      <div 
+                        className={`slider-wrapper ${getHighlightClass('salutation')}`}
+                        onMouseEnter={() => handleMouseEnter('salutation')}
+                        onMouseLeave={handleMouseLeave}
+                      >
+                          <input 
+                              type="range" min="0" max="2" step="1" 
+                              name="salutation" value={formData.salutation} 
+                              onChange={handleChange} className="salutation-slider"
+                              tabIndex={tabIndices['salutation']}
+                          />
+                          <div className="slider-val">{getSalutationLabel(formData.salutation)}</div>
+                      </div>
+                  </div>
+
+                  <div className="form-group">
+                      <label tabIndex={tabIndices['firstName']} className="focusable-label">Name</label>
+                      <input 
+                          type="text" name="firstName" value={formData.firstName} 
+                          onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off" 
+                          className={isSubmitted && errors.firstName ? "error-border" : ""}
+                          tabIndex={tabIndices['firstName']}
+                      />
+                      {isSubmitted && errors.firstName && <div className="err-msg">{errors.firstName}</div>}
+                  </div>
+
+                  <div className="form-group">
+                      <label tabIndex={tabIndices['lastName']} className="focusable-label">Nachname</label>
+                      <input 
+                          type="text" name="lastName" value={formData.lastName} 
+                          onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off" 
+                          className={isSubmitted && errors.lastName ? "error-border" : ""}
+                          tabIndex={tabIndices['lastName']}
+                      />
+                      {isSubmitted && errors.lastName && <div className="err-msg">{errors.lastName}</div>}
+                  </div>
+
+          
+                  <div className="form-group" >
+                      <div className="city-row">
+                      <div >
+                          <label tabIndex={tabIndices['zip']} className="focusable-label">PLZ  </label>
+                          <input 
+                              type="number" name="zip" value={formData.zip} 
+                              onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off"
+                              className={isSubmitted && errors.zip ? "error-border" : ""}
+                              tabIndex={tabIndices['zip']}
+                          />
+                          {isSubmitted && errors.zip && <div className="err-msg">{errors.zip}</div>}
+                      </div>
+                      
+                      <div >
+                          <label tabIndex={tabIndices['city']} className="focusable-label">Ort  </label>
+                          <input 
+                              type="text" name="city" value={formData.city} 
+                              onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off"
+                              className={isSubmitted && errors.city ? "error-border" : ""}
+                              tabIndex={tabIndices['city']}
+                          />
+          
+                          {citySuggestions.length > 0 && (
+                              <ul className="city-suggestions-list">
+                                  {citySuggestions.map(c => (
+                                      <li key={c.zip} onClick={() => selectCity(c.name)}>
+                                          {c.name} ({c.zip})
+                                      </li>
+                                  ))}
+                              </ul>
+                          )}
+                          {isSubmitted && errors.city && <div className="err-msg">{errors.city}</div>}
+                      </div>
+                      </div>
+                  </div>
+
+                  <div className="form-group">
+                      <label tabIndex={tabIndices['email']} className="focusable-label">E-Mail</label>
+                      {!formData.email && <div className="info-hint">Hinweis: Eine E-Mail muss ein @ enthalten.</div>}
+                      <input 
+                          type="text" name="email" value={formData.email} 
+                          onChange={handleChange} onKeyDown={handleEmailKeyDown} 
+                          onFocus={enableInput} readOnly autoComplete="off" 
+                          placeholder="Tippe zuerst @" className={isSubmitted && errors.email ? "error-border" : ""}
+                          tabIndex={tabIndices['email']}
+                      />
+                      {isSubmitted && errors.email && <div className="err-msg">{errors.email}</div>}
+                  </div>
+
+                  <div className="form-group">
+                      <label tabIndex={0} className="focusable-label" style={{width:'100%'}}>Wunschtermin</label>
+                      <div className="date-row">{getDateInputs()}</div>
+                  </div>
+
+                  {/* --- 4. TARGET: SUBMIT BUTTON --- */}
+                  <button 
+                    type="submit" 
+                    className={`submit-btn ${getHighlightClass('submit-btn')}`} 
+                    tabIndex={tabIndices['submit']}
+                    onMouseEnter={() => handleMouseEnter('submit-btn')}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    Termin verbindlich anfragen
+                  </button>
+              </form>
+          </div>
+          <div className="calendar-section">{renderCalendar()}</div>
+        </div>
       </div>
-    </div>
+    </ImprovementWrapper>
   );
 }
