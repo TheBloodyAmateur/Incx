@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { RouterProvider } from "react-router-dom";
 import router from "./routes.jsx";
 import "../styles/global.css";
+import { UXProvider } from '../context/UXContext'; 
 
 // --- GLOBAL CUSTOM CURSOR COMPONENT ---
 const CustomCursor = () => {
@@ -56,9 +57,11 @@ const CustomCursor = () => {
 
 export default function App() {
     return (
+        <UXProvider>
         <>
             <CustomCursor />
             <RouterProvider router={router} />
         </>
+        </UXProvider>
     );
 }
