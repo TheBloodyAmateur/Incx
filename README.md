@@ -22,9 +22,11 @@ After pulling the the repository a **.env** file has to be created at the root d
 - **VITE_BACKEND_URL**: the URL over which the frontend may reach the backend (default: http://incx-backend:BACKEND_PORT/api)
 
 ## How to run
-After verifying the Docker Engine is up and running; to run the application run thew following commands in the CLI within the root directory of the project:
+After verifying the Docker Engine is up and running; to run the application run the following commands in the CLI within the root directory of the project:
 
 ```cli
+cd frontend && npm install
+cd ..
 docker-compose up --build --watch
 ```
 
