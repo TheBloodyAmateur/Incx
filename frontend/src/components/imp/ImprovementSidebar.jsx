@@ -6,28 +6,10 @@ const ImprovementSidebar = () => {
     highlightedId, 
     setHighlight, 
     hoverModeActive, 
-    toggleHoverMode 
+    toggleHoverMode,
+    currentImprovements, // <--- HIER: Daten aus dem Context
+    loading
   } = useUX();
-
-  // Demo-Daten: IDs müssen mit der BookingPage übereinstimmen!
-  const suggestions = [
-    {
-      id: 'salutation',
-      category: 'UX',
-      title: 'Salutation - Slider',
-      description: 'Die Auswahl einer Anrede über einen Slider ist unintuitiv.',
-      solution: 'Verwenden Sie stattdessen eine Dropdown-Liste.',
-      severity: 'high'
-    },
-    {
-      id: 'submit-btn',
-      category: 'Wording',
-      title: 'Klarere Ansprache',
-      description: 'Ersetze "Terminierung" durch "Termin buchen".',
-      solution: null,
-      severity: 'medium'
-    }
-  ];
 
   return (
     <div className="h-full flex flex-col w-full bg-neutral-900 text-white font-sans">
@@ -40,7 +22,7 @@ const ImprovementSidebar = () => {
             <h2 className="font-mono text-sm text-emerald-400 tracking-wider font-bold">UI IMPROVER</h2>
           </div>
           
-          {/* NEU: Scan-Modus Toggle */}
+          {/* Scan-Modus Toggle */}
           <div className="flex items-center gap-2" title="Scan-Modus: Zeige Vorschläge beim Hovern über die Seite">
             <span className={`text-[10px] font-mono transition-colors ${hoverModeActive ? 'text-white' : 'text-neutral-600'}`}>SCAN</span>
             <button 
@@ -58,16 +40,27 @@ const ImprovementSidebar = () => {
         <p className="text-neutral-500 text-xs">Echtzeit-Analyse deiner Seite</p>
       </div>
 
-      {/* Liste */}
+      {/* Liste der Improvements */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4 dark-scrollbar">
-        {suggestions.map((item) => {
-          const isActive = highlightedId === item.id;
+        
+        {loading && <div className="text-center text-neutral-500 text-xs py-4">Lade Daten...</div>}
+
+        {/* Fallback wenn leer */}
+        {!loading && (!currentImprovements || currentImprovements.length === 0) && (
+           <div className="text-center text-neutral-600 text-xs py-10 opacity-50">
+             Keine Verbesserungen gefunden.
+           </div>
+        )}
+
+        {/* ECHTE DATEN RENDERN */}
+        {currentImprovements && currentImprovements.map((item) => {
+          // Wir nutzen 'uiName' aus der DB als ID für das Highlighting
+          const isActive = highlightedId === item.uiName; 
 
           return (
             <div 
-              key={item.id}
-              // NEU: Events senden ID an Context
-              onMouseEnter={() => setHighlight(item.id)}
+              key={item.id} 
+              onMouseEnter={() => setHighlight(item.uiName)}
               onMouseLeave={() => setHighlight(null)}
               className={`group relative p-4 rounded-xl border transition-all duration-300 cursor-default ${
                 isActive 
@@ -76,36 +69,35 @@ const ImprovementSidebar = () => {
               }`}
             >
               <div className="flex justify-between items-start mb-2">
-                <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
-                  item.severity === 'high' 
-                    ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' 
-                    : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
-                }`}>
-                  {item.category.toUpperCase()}
+                {/* Typ Badge (z.B. SLIDER) */}
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded border bg-amber-500/10 border-amber-500/20 text-amber-400 uppercase">
+                  {item.uiType || 'UX'}
                 </span>
               </div>
 
               <h3 className={`font-medium mb-1 transition-colors ${isActive ? 'text-emerald-300' : 'text-white'}`}>
-                {item.title}
+                {item.uiName}
               </h3>
               
               <div className="space-y-3">
                 <p className="text-neutral-400 text-sm leading-relaxed">
                   {item.description}
                 </p>
-                {item.solution && (
+                
+                {/* Lösungsvorschlag */}
+                {item.improvementProposal && (
                   <div className="bg-neutral-950/50 p-2 rounded text-xs text-neutral-300 border-l-2 border-neutral-700">
-                    {item.solution}
+                    {item.improvementProposal}
                   </div>
                 )}
               </div>
-
+              {item.improvementComponent && (
               <button className="mt-4 w-full py-2 rounded-lg bg-white/5 hover:bg-emerald-600 hover:text-white text-neutral-400 text-sm font-medium transition-all duration-200 border border-white/5 hover:border-emerald-500 flex items-center justify-center gap-2 group-hover:text-white">
                 <span>Optimierung anwenden</span>
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
-              </button>
+              </button>)}
             </div>
           );
         })}
@@ -116,9 +108,9 @@ const ImprovementSidebar = () => {
         <div className="flex justify-between items-center text-[10px] text-neutral-600 font-mono uppercase">
           <span className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            System Active
+            Online
           </span>
-          <span>v1.0.3</span>
+          <span>v1.0.4</span>
         </div>
       </div>
     </div>

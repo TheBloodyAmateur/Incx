@@ -1,11 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LetterGlitch from "../../components/ui/LetterGlitch";
 import SimpleNav from "../../components/ui/SimpleNav";
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import "./LoginPage.css";
+import ImprovementWrapper from '../../components/imp/ImprovementWrapper';
+import { useUX } from '../../context/UXContext';
 
 export default function LoginPage() {
+      const { loadImprovementsForPage } = useUX();
+    
+      useEffect(() => {
+        loadImprovementsForPage('LoginPage');
+      }, []); 
     const [devMode, setDevMode] = useState(false);
     const [password, setPassword] = useState("");
     const [username, setUsername] = useState("");
@@ -39,6 +46,7 @@ export default function LoginPage() {
     };
 
     return (
+        <ImprovementWrapper>
         <div className="login-wrapper">
             <LetterGlitch
                 glitchColors={["#3A2F66", "#2E4A7F", "#0F6A77"]}
@@ -57,7 +65,7 @@ export default function LoginPage() {
             </div>
             <div className="login-box">
                 <h1>{isLogin ? (devMode ? "Login (DEV)" : "Login") : "Register"}</h1>
-                {error && <p className="error-message">{error}</p>}
+                {error && <p name="error-message" className="error-message">{error}</p>}
                 <label>Username</label>
                 <input
                     type="text"
@@ -81,5 +89,6 @@ export default function LoginPage() {
                 </a>
             </div>
         </div>
+        </ImprovementWrapper>
     );
 }
