@@ -25,7 +25,7 @@
 .today-display {
     font-size: 1.2rem;
     font-weight: bold;
-    color: #0F6A77; /* Incx Akzent */
+    color: #0F6A77; 
 }
 
 .content-split {
@@ -54,7 +54,7 @@
     height: fit-content;
 }
 
-/* Form Styles */
+
 .form-group {
     margin-bottom: 1.5rem;
     display: flex;
@@ -218,7 +218,7 @@ input:focus {
     transition: width 0.1s;
 }
 
-/* Submit Button */
+
 .submit-btn {
     width: 100%;
     padding: 15px;
@@ -240,7 +240,7 @@ input:focus {
 }
 
 
-/* Calendar Styles (Right Side) */
+
 .mini-calendar {
     color: #ddd;
 }
@@ -284,13 +284,13 @@ input:focus {
 }
 
 .cal-cell.today {
-    border: 2px solid #0F6A77; /* Incx Cyan */
+    border: 2px solid #0F6A77; 
     color: #fff;
     font-weight: bold;
 }
 
 .cal-cell.booked {
-    background-color: #8a3333; /* Rot für belegt */
+    background-color: #8a3333;
     text-decoration: line-through;
     opacity: 0.7;
 }

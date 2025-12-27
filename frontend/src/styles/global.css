@@ -12,7 +12,26 @@ body {
     overflow-x: hidden;
 }
 
-/* custom cursor */
+
 * {
     cursor: none !important;
+}
+
+
+.dark-scrollbar::-webkit-scrollbar {
+  width: 8px;            
+}
+
+.dark-scrollbar::-webkit-scrollbar-track {
+  background: #0a0a0a;     
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb {
+  background: #333;       
+  border-radius: 4px;     
+  border: 1px solid #0a0a0a; 
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #555;       
 }
