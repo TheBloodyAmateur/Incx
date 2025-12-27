@@ -8,6 +8,5 @@ import com.github.thebloodyamateur.incx.persistence.model.Improvement;
 @Repository
 public interface ImprovementRepository extends JpaRepository<Improvement, Long> {
     
-    // Findet alle Improvements für eine spezifische Seite (z.B. "BookingPage")
     List<Improvement> findByPageName(String pageName);
 }

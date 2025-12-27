@@ -1,18 +1,18 @@
-/* --- Wrapper & Indicator --- */
+
 .improvement-wrapper {
     position: relative;
-    display: inline-block; /* Passt sich dem Inhalt an */
-    width: 100%; /* Oder fit-content, je nach Layout */
+    display: inline-block; 
+    width: 100%; 
 }
 
-/* Das rote/orange Info-Icon am Control */
+
 .improvement-indicator {
     position: absolute;
     top: -8px;
     right: -8px;
     width: 20px;
     height: 20px;
-    background-color: #ff9800; /* Incx Warn-Farbe */
+    background-color: #ff9800; 
     color: #000;
     border-radius: 50%;
     display: flex;
@@ -36,10 +36,10 @@
     to { transform: scale(1); }
 }
 
-/* --- Tooltip / Popup (bei Click oder Hover) --- */
+
 .improvement-popup {
     position: absolute;
-    bottom: 100%; /* Über dem Element */
+    bottom: 100%; 
     left: 50%;
     transform: translateX(-50%);
     background: #1e1e1e;
@@ -52,7 +52,7 @@
     font-size: 0.9rem;
     box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     margin-bottom: 10px;
-    pointer-events: none; /* Klicks gehen durch, außer wir wollen Interaktion */
+    pointer-events: none; 
     opacity: 0;
     transition: opacity 0.2s, transform 0.2s;
     transform-origin: bottom center;
@@ -82,10 +82,10 @@
     padding-top: 0.5rem;
     border-top: 1px solid #333;
     font-style: italic;
-    color: #4caf50; /* Grün für Lösung */
+    color: #4caf50; 
 }
 
-/* --- Sidebar --- */
+
 .improvement-sidebar {
     position: fixed;
     right: 0;

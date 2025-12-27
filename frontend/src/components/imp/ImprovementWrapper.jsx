@@ -1,22 +1,19 @@
-import React, { useRef } from 'react'; // useRef importieren!
+import React, { useRef } from 'react'; 
 import ImprovementSidebar from './ImprovementSidebar';
 import { useUX } from '../../context/UXContext';
-import { useUXAutoWiring } from '../../hooks/useUXAutoWiring'; // <--- Hook importieren
+import { useUXAutoWiring } from '../../hooks/useUXAutoWiring'; 
 
 const ImprovementWrapper = ({ children }) => {
   const { improverActive, toggleImprover, sidebarOpen, toggleSidebar } = useUX();
   
-  // 1. Ref für den Content-Bereich erstellen
-  const contentRef = useRef(null);
 
-  // 2. Den Auto-Wiring Hook aktivieren
-  // Dieser Hook überwacht contentRef und macht die Inputs "lebendig"
+  const contentRef = useRef(null);
   useUXAutoWiring(contentRef);
 
   return (
     <div className="flex h-screen overflow-hidden bg-neutral-950 text-white relative">
       
-      {/* Master Control (Overlay) */}
+    
       <div className="absolute top-4 right-6 z-50 flex items-center gap-3 bg-neutral-900/80 backdrop-blur p-2 rounded-full border border-white/10 shadow-lg transition-opacity hover:opacity-100 opacity-80">
         <span className="text-xs font-mono text-neutral-400 pl-2">UI IMPROVER</span>
         <button 
@@ -44,7 +41,6 @@ const ImprovementWrapper = ({ children }) => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto relative z-0 dark-scrollbar transition-all duration-300">
-        {/* 3. Ref an den Wrapper div hängen */}
         <div className="min-h-full" ref={contentRef}>
           {children}
         </div>

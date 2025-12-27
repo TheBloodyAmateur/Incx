@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ImprovementWrapper from '../../components/imp/ImprovementWrapper';
-import { useUX } from '../../context/UXContext'; // Context nur noch zum Laden nötig
+import { useUX } from '../../context/UXContext'; 
 import "./BookingPage.css";
 
-// --- DATEN ---
+
 const MONTH_NAMES = [ "JANUAR", "FEBRUAR", "MÄRZ", "APRIL", "MAI", "JUNI", "JULI", "AUGUST", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DEZEMBER" ];
 const AUSTRIA_CITIES = [ { name: "Wien", zip: "1010" }, { name: "Graz", zip: "8010" }, { name: "Linz", zip: "4020" }, { name: "Salzburg", zip: "5020" }, { name: "Innsbruck", zip: "6020" }, { name: "Klagenfurt", zip: "9020" }, { name: "Villach", zip: "9500" }, { name: "Wels", zip: "4600" }, { name: "St. Pölten", zip: "3100" }, { name: "Dornbirn", zip: "6850" } ];
 const getDaysInMonth = (month, year) => new Date(year, month, 0).getDate();
@@ -12,14 +12,12 @@ const saveBooking = (dateStr) => { const existing = JSON.parse(sessionStorage.ge
 const getBookings = () => JSON.parse(sessionStorage.getItem('incx_bookings') || '[]');
 
 export default function BookingPage() {
-  // 1. Context nur noch zum Laden der Daten
   const { loadImprovementsForPage } = useUX();
 
   useEffect(() => {
     loadImprovementsForPage('BookingPage');
   }, []); 
 
-  // --- STANDARD STATE (Unverändert) ---
   const [dateFormat, setDateFormat] = useState("DE"); 
   const [currentDateString, setCurrentDateString] = useState("");
   const [bookedDates, setBookedDates] = useState([]);
@@ -260,11 +258,9 @@ export default function BookingPage() {
 
                   <div className="form-group">
                       <label tabIndex={0} className="focusable-label" style={{width:'100%'}}>Wunschtermin</label>
-                      {/* Für den Auto-Wiring Hook können wir der date-row einfach eine ID geben */}
                       <div className="date-row" id="date_split">{getDateInputs()}</div>
                   </div>
 
-                  {/* Submit Button braucht jetzt nur noch seine ID, um erkannt zu werden */}
                   <button 
                     type="submit" 
                     className="submit-btn" 

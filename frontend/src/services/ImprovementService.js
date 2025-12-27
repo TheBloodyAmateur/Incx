@@ -14,12 +14,12 @@ export const ImprovementService = {
             return await response.json();
         } catch (error) {
             console.error("ImprovementService Error:", error);
-            return []; // Leeres Array bei Fehler, damit die App nicht crasht
+            return []; 
         }
     },
 
     /**
-     * Lädt alle Improvements (für eine globale Übersicht, falls nötig).
+     * Lädt alle Improvements (für eine globale Übersicht).
      */
     getAll: async () => {
         try {

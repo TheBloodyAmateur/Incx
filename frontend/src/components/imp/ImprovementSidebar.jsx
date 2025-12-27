@@ -7,7 +7,7 @@ const ImprovementSidebar = () => {
     setHighlight, 
     hoverModeActive, 
     toggleHoverMode,
-    currentImprovements, // <--- HIER: Daten aus dem Context
+    currentImprovements, 
     loading
   } = useUX();
 
@@ -37,7 +37,7 @@ const ImprovementSidebar = () => {
             </button>
           </div>
         </div>
-        <p className="text-neutral-500 text-xs">Echtzeit-Analyse deiner Seite</p>
+        <p className="text-neutral-500 text-xs"></p>
       </div>
 
       {/* Liste der Improvements */}
@@ -52,9 +52,8 @@ const ImprovementSidebar = () => {
            </div>
         )}
 
-        {/* ECHTE DATEN RENDERN */}
+     
         {currentImprovements && currentImprovements.map((item) => {
-          // Wir nutzen 'uiName' aus der DB als ID für das Highlighting
           const isActive = highlightedId === item.uiName; 
 
           return (
@@ -69,7 +68,6 @@ const ImprovementSidebar = () => {
               }`}
             >
               <div className="flex justify-between items-start mb-2">
-                {/* Typ Badge (z.B. SLIDER) */}
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded border bg-amber-500/10 border-amber-500/20 text-amber-400 uppercase">
                   {item.uiType || 'UX'}
                 </span>
@@ -106,11 +104,6 @@ const ImprovementSidebar = () => {
       {/* Footer */}
       <div className="p-4 border-t border-white/10 bg-neutral-900">
         <div className="flex justify-between items-center text-[10px] text-neutral-600 font-mono uppercase">
-          <span className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            Online
-          </span>
-          <span>v1.0.4</span>
         </div>
       </div>
     </div>
