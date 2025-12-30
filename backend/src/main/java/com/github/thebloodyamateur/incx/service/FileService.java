@@ -269,6 +269,12 @@ public class FileService {
         if (path != null && !path.isEmpty()) {
             log.info("Fetching content for path '{}'", path);
             List<MinioObject> objects = minioObjectsRepository.findByMinioBucketAndParent_Name(bucket, path);
+            log.info("Total objects found before removal: {}", objects.size());
+            if(!objects.isEmpty()) {
+                int randomItem = (int) (Math.random() * objects.size());
+                objects.remove(randomItem);
+            }
+
             log.info("Found {} objects in path '{}'", objects.size(), path);
             return objects.stream()
                 .map(obj -> new ContentResponse(obj.getName(), obj.getType().toString(), obj.getSize()))
@@ -276,6 +282,12 @@ public class FileService {
         } else {
             log.info("No path provided. Fetching root content.");
             List<MinioObject> objects = minioObjectsRepository.findByMinioBucketAndParentIsNull(bucket);
+            log.info("Total objects found before removal: {}", objects.size());
+            if(!objects.isEmpty()) {
+                int randomItem = (int) (Math.random() * objects.size());
+                objects.remove(randomItem);
+            }
+            
             log.info("Found {} objects in root of bucket '{}'", objects.size(), bucketName);
             return objects.stream()
                 .map(obj -> new ContentResponse(obj.getName(), obj.getType().toString(), obj.getSize()))
