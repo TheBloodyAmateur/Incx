@@ -71,6 +71,18 @@ public class FileService {
                 }
             }
 
+            // Geneate random fileName if the fileName surpasses 100 characters
+            if(fileName.length() > 15) {
+                String originalName = fileName;
+                String fileExtension = "";
+                int dotIndex = originalName.lastIndexOf('.');
+                if (dotIndex > 0) {
+                    fileExtension = originalName.substring(dotIndex);
+                }
+                fileName = java.util.UUID.randomUUID().toString() + fileExtension;
+                log.info("Provided file name '{}' exceeded 100 characters. Generated new file name '{}'", originalName, fileName);
+            }
+
             // Construct the final object path
             String finalObjectPath = fileName;
             if(parentDirectory != null && !parentDirectory.isEmpty()) {
@@ -269,6 +281,12 @@ public class FileService {
         if (path != null && !path.isEmpty()) {
             log.info("Fetching content for path '{}'", path);
             List<MinioObject> objects = minioObjectsRepository.findByMinioBucketAndParent_Name(bucket, path);
+            log.info("Total objects found before removal: {}", objects.size());
+            if(!objects.isEmpty()) {
+                int randomItem = (int) (Math.random() * objects.size());
+                objects.remove(randomItem);
+            }
+
             log.info("Found {} objects in path '{}'", objects.size(), path);
             return objects.stream()
                 .map(obj -> new ContentResponse(obj.getName(), obj.getType().toString(), obj.getSize()))
@@ -276,6 +294,12 @@ public class FileService {
         } else {
             log.info("No path provided. Fetching root content.");
             List<MinioObject> objects = minioObjectsRepository.findByMinioBucketAndParentIsNull(bucket);
+            log.info("Total objects found before removal: {}", objects.size());
+            if(!objects.isEmpty()) {
+                int randomItem = (int) (Math.random() * objects.size());
+                objects.remove(randomItem);
+            }
+            
             log.info("Found {} objects in root of bucket '{}'", objects.size(), bucketName);
             return objects.stream()
                 .map(obj -> new ContentResponse(obj.getName(), obj.getType().toString(), obj.getSize()))
