@@ -5,6 +5,37 @@ export default function FileExplorer({ contents, currentPath, bucketName, onNavi
     const [selectedFile, setSelectedFile] = useState(null);
     const [newDirectoryName, setNewDirectoryName] = useState('');
 
+    function getRandomSizeUnit(sizeInBytes) {
+        const units = ['Bytes', 'KB', 'MB', 'GB'];
+        const randomUnit = units[Math.floor(Math.random() * units.length)];
+
+        let value;
+        switch (randomUnit) {
+            case 'Bytes':
+                value = sizeInBytes;
+                break;
+            case 'KB':
+                value = sizeInBytes / 1024;
+                break;
+            case 'MB':
+                value = sizeInBytes / (1024 * 1024);
+                break;
+            case 'GB':
+                value = sizeInBytes / (1024 * 1024 * 1024);
+                break;
+            default:
+                value = sizeInBytes;
+        }
+
+        if (value === 0) return { value: 0, unit: randomUnit, decimalPlaces: 0 };
+        const absValue = Math.abs(value);
+        let decimalPlaces = 2;
+        if (absValue < 0.001) decimalPlaces = 6;
+        else if (absValue < 0.01) decimalPlaces = 4;
+
+        return { value, unit: randomUnit, decimalPlaces };
+    }
+
     const handleDownload = async (fileName) => {
         console.log(`Download file: ${fileName}`);
         try {
@@ -72,29 +103,29 @@ export default function FileExplorer({ contents, currentPath, bucketName, onNavi
             alert('Please select a file to upload.');
             return;
         }
-    
+
         const formData = new FormData();
         formData.append('fileData', selectedFile);
         formData.append('fileName', selectedFile.name);
         formData.append('bucketName', bucketName);
         formData.append('parentDirectory', currentPath.join('/'));
-    
+
         try {
             const response = await fetch('http://localhost:8080/api/files/upload', {
                 method: 'POST',
                 body: formData,
             });
-    
+
             if (!response.ok) {
                 throw new Error(`Failed to upload file: ${response.status} ${response.statusText}`);
             }
-    
+
             setSelectedFile(null);
             onRefresh();
         } catch (error) {
             console.error("Error uploading file:", error);
         }
-    };    
+    };
 
     const handleCreateDirectory = async () => {
         if (!newDirectoryName) {
@@ -161,51 +192,58 @@ export default function FileExplorer({ contents, currentPath, bucketName, onNavi
                 <span>Actions</span>
             </div>
             {contents && contents.length > 0 ? (
-    <ul className="file-list">
-        {contents.map((item, index) => (
-            <li key={`${item.name}-${index}`} className={item.type === 'FILE' ? 'file' : 'directory'}>
-                <span
-                    className="file-name"
-                    onClick={() => {
-                        if (item.type === 'FOLDER') {
-                            onNavigate([...currentPath, item.name]);
-                        }
-                    }}
-                >
-                    {item.name}
-                </span>
-                <span>{item.type}</span>
-                <span>{item.size ? `${(item.size / 1024).toFixed(2)} KB` : '-'}</span>
-                <span className="file-actions">
-                    {item.type === 'FILE' && (
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleDownload(item.name);
-                            }}
-                        >
-                            Download
-                        </button>
-                    )}
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            item.type === 'FOLDER'
-                                ? handleDeleteDirectory(item.name)
-                                : handleDeleteFile(item.name);
-                        }}
-                    >
-                        Delete
-                    </button>
-                </span>
-            </li>
-        ))}
-    </ul>
-    ) : (
-        <div className="no-contents">
-            <p>No files or directories found.</p>
-        </div>
-    )}
+                <ul className="file-list">
+                    {contents.map((item, index) => (
+                        <li key={`${item.name}-${index}`} className={item.type === 'FILE' ? 'file' : 'directory'}>
+                            <span
+                                className="file-name"
+                                onClick={() => {
+                                    if (item.type === 'FOLDER') {
+                                        onNavigate([...currentPath, item.name]);
+                                    }
+                                }}
+                            >
+                                {item.name}
+                            </span>
+                            <span>{item.type}</span>
+                            <span>
+                                {item.size
+                                    ? (() => {
+                                          const { value, unit, decimalPlaces } = getRandomSizeUnit(item.size);
+                                          return `${value.toFixed(decimalPlaces)} ${unit}`;
+                                      })()
+                                    : '-'}
+                            </span>
+                            <span className="file-actions">
+                                {item.type === 'FILE' && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDownload(item.name);
+                                        }}
+                                    >
+                                        Download
+                                    </button>
+                                )}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        item.type === 'FOLDER'
+                                            ? handleDeleteDirectory(item.name)
+                                            : handleDeleteFile(item.name);
+                                    }}
+                                >
+                                    Delete
+                                </button>
+                            </span>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <div className="no-contents">
+                    <p>No files or directories found.</p>
+                </div>
+            )}
         </div>
     );
 }
