@@ -71,6 +71,18 @@ public class FileService {
                 }
             }
 
+            // Geneate random fileName if the fileName surpasses 100 characters
+            if(fileName.length() > 15) {
+                String originalName = fileName;
+                String fileExtension = "";
+                int dotIndex = originalName.lastIndexOf('.');
+                if (dotIndex > 0) {
+                    fileExtension = originalName.substring(dotIndex);
+                }
+                fileName = java.util.UUID.randomUUID().toString() + fileExtension;
+                log.info("Provided file name '{}' exceeded 100 characters. Generated new file name '{}'", originalName, fileName);
+            }
+
             // Construct the final object path
             String finalObjectPath = fileName;
             if(parentDirectory != null && !parentDirectory.isEmpty()) {
