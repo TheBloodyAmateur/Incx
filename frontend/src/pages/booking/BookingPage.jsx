@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ImprovementWrapper from '../../components/imp/ImprovementWrapper';
 import { useUX } from '../../context/UXContext'; 
+import { BookingService } from '../../services/BookingService';
 import "./BookingPage.css";
 
 
@@ -8,15 +9,24 @@ const MONTH_NAMES = [ "JANUAR", "FEBRUAR", "MÄRZ", "APRIL", "MAI", "JUNI", "JUL
 const AUSTRIA_CITIES = [ { name: "Wien", zip: "1010" }, { name: "Graz", zip: "8010" }, { name: "Linz", zip: "4020" }, { name: "Salzburg", zip: "5020" }, { name: "Innsbruck", zip: "6020" }, { name: "Klagenfurt", zip: "9020" }, { name: "Villach", zip: "9500" }, { name: "Wels", zip: "4600" }, { name: "St. Pölten", zip: "3100" }, { name: "Dornbirn", zip: "6850" } ];
 const getDaysInMonth = (month, year) => new Date(year, month, 0).getDate();
 const getFirstDayOfMonth = (month, year) => { let day = new Date(year, month - 1, 1).getDay(); return day === 0 ? 6 : day - 1; };
-const saveBooking = (dateStr) => { const existing = JSON.parse(sessionStorage.getItem('incx_bookings') || '[]'); existing.push(dateStr); sessionStorage.setItem('incx_bookings', JSON.stringify(existing)); };
-const getBookings = () => JSON.parse(sessionStorage.getItem('incx_bookings') || '[]');
 
 export default function BookingPage() {
   const { loadImprovementsForPage } = useUX();
 
   useEffect(() => {
     loadImprovementsForPage('BookingPage');
+    loadBookings();
   }, []); 
+
+  const loadBookings = async () => {
+    try {
+      const bookings = await BookingService.getMyBookings();
+      const dateStrings = bookings.map(b => b.bookingDate); 
+      setBookedDates(dateStrings);
+    } catch (e) {
+      console.error("Konnte Buchungen nicht laden", e);
+    }
+  };
 
   const [dateFormat, setDateFormat] = useState("DE"); 
   const [currentDateString, setCurrentDateString] = useState("");
@@ -44,7 +54,7 @@ export default function BookingPage() {
     const y = today.getFullYear();
     let dateStr = selected.code === "DE" ? `${d}.${m}.${y}` : selected.code === "US" ? `${m}/${d}/${y}` : `${y}-${m}-${d}`;
     setCurrentDateString(dateStr);
-    setBookedDates(getBookings());
+    
     const controlNames = [ "salutation", "firstName", "lastName", "zip", "city", "email", "day", "month", "year", "submit" ];
     controlNames.sort();
     const indices = {};
@@ -80,7 +90,7 @@ export default function BookingPage() {
   const handleEmailKeyDown = (e) => { if (e.key.length > 1) return; const hasAt = formData.email.includes('@'); if (!hasAt && e.key !== '@') e.preventDefault(); };
   const adjustDay = (delta) => { setFormData(prev => { let newDay = parseInt(prev.day) + delta; if (newDay < 1) newDay = 1; if (newDay > 31) newDay = 31; return { ...prev, day: newDay }; }); };
   const handleMonthSuggestionClick = (e) => e.preventDefault();
-  const handleYearScroll = (e) => {
+    const handleYearScroll = (e) => {
       e.preventDefault();
       const delta = e.deltaY > 0 ? -1 : 1; 
       setScrollProgress(prev => {
@@ -102,23 +112,48 @@ export default function BookingPage() {
     if (!formData.year) newErrors.year = "Jahr fehlt.";
     return newErrors;
   };
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validate();
     setErrors(validationErrors);
     setIsSubmitted(true);
+
     if (Object.keys(validationErrors).length === 0) {
       const monthIndex = MONTH_NAMES.indexOf(formData.month.toUpperCase()) + 1;
       const mStr = String(monthIndex).padStart(2, '0');
       const dStr = String(formData.day).padStart(2, '0');
       const bookingIso = `${formData.year}-${mStr}-${dStr}`;
-      saveBooking(bookingIso);
-      setBookedDates(getBookings());
-      alert(`Termin gebucht für: ${bookingIso} in ${formData.zip} ${formData.city}`);
-    } else { alert("Fehlerhafte Eingaben. Bitte prüfen."); }
-    setFormData(initialFormState);
-    setMonthSuggestions([]); setCitySuggestions([]); setScrollProgress(0);
+
+      const bookingPayload = {
+          salutation: formData.salutation,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          zip: formData.zip,
+          city: formData.city,
+          bookingDate: bookingIso 
+      };
+      setFormData(initialFormState);
+      try {
+          await BookingService.createBooking(bookingPayload);
+          alert(`Termin erfolgreich gebucht für: ${bookingIso}`);
+          loadBookings();
+          
+          
+          setMonthSuggestions([]);
+          setCitySuggestions([]);
+          setScrollProgress(0);
+          setIsSubmitted(false);
+
+      } catch (error) {
+          alert(error.message); 
+      }
+    } else {
+      alert("Fehlerhafte Eingaben. Bitte prüfen.");
+    }
   };
+
   const enableInput = (e) => e.target.removeAttribute('readonly');
 
   const renderDayInput = () => (
@@ -172,7 +207,13 @@ export default function BookingPage() {
       const week = [];
       for (let j = 0; j < 7; j++) {
         if ((i === 0 && j < startDay) || dayCount > daysInMonth) week.push(null); 
-        else { week.push({ day: dayCount, isToday: dayCount === today.getDate(), isBooked: bookedDates.includes(`${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(dayCount).padStart(2,'0')}`) }); dayCount++; }
+        else { 
+            const checkIso = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(dayCount).padStart(2,'0')}`;
+            const isBooked = bookedDates.includes(checkIso);
+            const isToday = dayCount === today.getDate() && currentMonth === (today.getMonth() + 1) && currentYear === today.getFullYear();
+            week.push({ day: dayCount, isToday, isBooked }); 
+            dayCount++; 
+        }
       }
       weeks.push(week); if (dayCount > daysInMonth) break;
     }
