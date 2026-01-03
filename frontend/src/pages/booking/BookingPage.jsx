@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ImprovementWrapper from '../../components/imp/ImprovementWrapper';
 import { useUX } from '../../context/UXContext'; 
-import { BookingService } from '../../services/BookingService';
+import { BookingService } from '../../services/BookingService'; 
 import "./BookingPage.css";
 
 
@@ -35,7 +35,10 @@ export default function BookingPage() {
   const today = new Date();
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth() + 1;
-  const initialFormState = { salutation: 1, firstName: "", lastName: "", email: "", day: 1, month: "", year: 2000, zip: "", city: "" };
+  const [calendarMonth, setCalendarMonth] = useState(currentMonth);
+  const [calendarYear, setCalendarYear] = useState(currentYear);
+
+  const initialFormState = { salutation: 1, firstName: "", lastName: "", email: "", day: 1, month: "", year: 2020, zip: "", city: "" };
   const [formData, setFormData] = useState(initialFormState);
   const [monthSuggestions, setMonthSuggestions] = useState([]);
   const [citySuggestions, setCitySuggestions] = useState([]); 
@@ -44,6 +47,21 @@ export default function BookingPage() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const SCROLL_THRESHOLD = 20;
   const yearScrollRef = useRef(null);
+
+  const changeCalendarMonth = (offset) => {
+    let newMonth = calendarMonth + offset;
+    let newYear = calendarYear;
+
+    if (newMonth > 12) {
+      newMonth = 1;
+      newYear++;
+    } else if (newMonth < 1) {
+      newMonth = 12;
+      newYear--;
+    }
+    setCalendarMonth(newMonth);
+    setCalendarYear(newYear);
+  };
 
   useEffect(() => {
     const formats = [ { code: "DE", label: "DD.MM.YYYY" }, { code: "US", label: "MM/DD/YYYY" }, { code: "ISO", label: "YYYY-MM-DD" } ];
@@ -180,15 +198,15 @@ export default function BookingPage() {
       const progressPercent = (Math.abs(scrollProgress) / SCROLL_THRESHOLD) * 100;
       const barColor = scrollProgress > 0 ? '#4caf50' : '#f44336'; 
       return (
-        <div className="date-control-wrapper" key="year">
-          <label tabIndex={tabIndices['year']} className="focusable-label">Jahr (Scrollen)</label>
-          <div className="year-scroll-container" ref={yearScrollRef} title="Mausrad benutzen zum Ändern (+/- 20 Ticks)" tabIndex={tabIndices['year']}>
-              <div className="year-display">{formData.year}</div>
+    <div className="date-control-wrapper" key="year">
+      <label tabIndex={tabIndices['year']} className="focusable-label">Jahr (Scrollen)</label>
+      <div className="year-scroll-container" ref={yearScrollRef} title="Mausrad benutzen zum Ändern (+/- 20 Ticks)" tabIndex={tabIndices['year']}>
+          <div className="year-display">{formData.year}</div>
               <div className="scroll-bar-container"><div className="scroll-bar-fill" style={{ width: `${progressPercent}%`, backgroundColor: barColor, marginLeft: scrollProgress < 0 ? 'auto' : '0' }} /></div>
-          </div>
-          {isSubmitted && errors.year && <div className="err-msg">{errors.year}</div>}
-        </div>
-      );
+      </div>
+      {isSubmitted && errors.year && <div className="err-msg">{errors.year}</div>}
+    </div>
+  );
   };
 
   const getDateInputs = () => {
@@ -200,17 +218,17 @@ export default function BookingPage() {
   };
 
   const renderCalendar = () => {
-    const daysInMonth = getDaysInMonth(currentMonth, currentYear);
-    const startDay = getFirstDayOfMonth(currentMonth, currentYear); 
+    const daysInMonth = getDaysInMonth(calendarMonth, calendarYear);
+    const startDay = getFirstDayOfMonth(calendarMonth, calendarYear); 
     const weeks = []; let dayCount = 1;
     for (let i = 0; i < 6; i++) {
       const week = [];
       for (let j = 0; j < 7; j++) {
         if ((i === 0 && j < startDay) || dayCount > daysInMonth) week.push(null); 
         else { 
-            const checkIso = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(dayCount).padStart(2,'0')}`;
+            const checkIso = `${calendarYear}-${String(calendarMonth).padStart(2,'0')}-${String(dayCount).padStart(2,'0')}`;
             const isBooked = bookedDates.includes(checkIso);
-            const isToday = dayCount === today.getDate() && currentMonth === (today.getMonth() + 1) && currentYear === today.getFullYear();
+            const isToday = dayCount === today.getDate() && calendarMonth === (today.getMonth() + 1) && calendarYear === today.getFullYear();
             week.push({ day: dayCount, isToday, isBooked }); 
             dayCount++; 
         }
@@ -219,7 +237,11 @@ export default function BookingPage() {
     }
     return (
       <div className="mini-calendar">
-        <div className="cal-header">{MONTH_NAMES[currentMonth-1]} {currentYear}</div>
+        <div className="cal-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+            <button type="button" onClick={() => changeCalendarMonth(-1)} style={{background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem'}}>&lt;</button>
+            <span>{MONTH_NAMES[calendarMonth-1]} {calendarYear}</span>
+            <button type="button" onClick={() => changeCalendarMonth(1)} style={{background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem'}}>&gt;</button>
+        </div>
         <div className="cal-grid-header"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
         <div className="cal-body">
           {weeks.map((week, wIdx) => (<div key={wIdx} className="cal-row">{week.map((cell, dIdx) => (<div key={dIdx} className={`cal-cell ${cell?.isToday?'today':''} ${cell?.isBooked?'booked':''}`}>{cell?cell.day:''}</div>))}</div>))}
@@ -275,7 +297,7 @@ export default function BookingPage() {
                           <input type="number" name="zip" value={formData.zip} onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off" className={isSubmitted && errors.zip ? "error-border" : ""} tabIndex={tabIndices['zip']} />
                           {isSubmitted && errors.zip && <div className="err-msg">{errors.zip}</div>}
                       </div>
-                      <div className="relative">
+                      <div className="relative"> 
                           <label tabIndex={tabIndices['city']} className="focusable-label">Ort  </label>
                           <input type="text" name="city" value={formData.city} onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off" className={isSubmitted && errors.city ? "error-border" : ""} tabIndex={tabIndices['city']} />
                           {citySuggestions.length > 0 && (<ul className="city-suggestions-list">{citySuggestions.map(c => (<li key={c.zip} onClick={() => selectCity(c.name)}>{c.name} ({c.zip})</li>))}</ul>)}
