@@ -15,4 +15,7 @@ CREATE TABLE IF NOT EXISTS public.improvements
 INSERT INTO public.improvements (page_name, ui_name, ui_type, description, improvement_proposal, improvement_component)
 VALUES 
 ('BookingPage', 'salutation', 'slider', 'Die Auswahl einer Anrede über einen Slider ist unintuitiv, da Slider für kontinuierliche Werte (wie Lautstärke) gedacht sind, nicht für diskrete Kategorien.', 'Verwenden Sie stattdessen eine Dropdown-Liste (Select) oder Radio-Buttons.', 'GoodSelectComponent'),
-('BookingPage', 'date_split', 'input_group', 'Das Datum auf drei separate Felder ohne logische Reihenfolge aufzuteilen, erhöht die kognitive Last und Fehlerquote.', 'Nutzen Sie einen Standard Date-Picker oder ein maskiertes Eingabefeld.', 'GoodDatePicker');
+('BookingPage', 'date_split', 'input_group', 'Das Datum auf drei separate Felder ohne logische Reihenfolge aufzuteilen, erhöht die kognitive Last und Fehlerquote.', 'Nutzen Sie einen Standard Date-Picker oder ein maskiertes Eingabefeld.', 'GoodDatePicker'),
+('WeatherPage', 'mode-switcher', 'UX', 'The mode switcher is hard to tap on mobile devices due to small hit area.', 'Increase padding and touch target size for better mobile usability.', 'TouchFriendlyToggle'),
+('WeatherPage', 'main-temp', 'VISUAL', 'The current temperature display lacks contrast against certain dynamic backgrounds.', 'Add a subtle text-shadow or backdrop filter to ensure readability.', 'HighContrastLabel'),
+('WeatherPage', 'stats-grid', 'LAYOUT', 'The statistics grid feels cluttered and lacks clear visual hierarchy.', 'Use a card-based layout with distinct headers for each statistic.', 'CardGrid');

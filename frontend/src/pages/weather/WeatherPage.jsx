@@ -57,6 +57,8 @@ const playThunderSound = () => {
     }
 };
 
+import { useUX } from '../../context/UXContext';
+
 // --- COMPONENTS ---
 
 // Draggable Cloud Component
@@ -450,6 +452,12 @@ export default function App({ username }) {
     const [showSearch, setShowSearch] = useState(true);
     const navigate = useNavigate();
 
+    // Wire up UX Improvements
+    const { loadImprovementsForPage } = useUX();
+    useEffect(() => {
+        loadImprovementsForPage('WeatherPage');
+    }, [loadImprovementsForPage]);
+
     const [godOverride, setGodOverride] = useState({
         active: false,
         weatherCode: 0,
@@ -549,7 +557,7 @@ export default function App({ username }) {
                         )}
                         <button onClick={() => setSoundEnabled(!soundEnabled)} className={`p-3 rounded-full backdrop-blur-md border border-white/5 transition-all ${soundEnabled ? 'bg-white/10 text-white' : 'bg-transparent text-white/40 hover:text-white'}`}><Volume2 size={18} /></button>
                     </div>
-                    <div className="relative flex bg-black/40 backdrop-blur-xl rounded-full p-1.5 border border-white/10 shadow-2xl">
+                    <div id="mode-switcher" className="relative flex bg-black/40 backdrop-blur-xl rounded-full p-1.5 border border-white/10 shadow-2xl">
                         {['normal', 'dev', 'god'].map((m) => (
                             <button key={m} onClick={() => setMode(m)} className={`relative px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${mode === m ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>{m}</button>
                         ))}
@@ -579,7 +587,7 @@ export default function App({ username }) {
 
                         {(weatherData || godOverride.active) && (
                             <>
-                                <div className={`w-full max-w-lg transition-all duration-700 ease-in-out origin-top z-50 ${showSearch ? 'opacity-100 scale-100 translate-y-0 mb-8' : 'opacity-0 scale-90 -translate-y-10 absolute pointer-events-none h-0 mb-0'}`}>
+                                <div id="search-overlay" className={`w-full max-w-lg transition-all duration-700 ease-in-out origin-top z-50 ${showSearch ? 'opacity-100 scale-100 translate-y-0 mb-8' : 'opacity-0 scale-90 -translate-y-10 absolute pointer-events-none h-0 mb-0'}`}>
                                     <div className="relative group">
                                         <input type="text" className="relative w-full bg-black/40 border border-white/10 text-white placeholder-white/20 rounded-2xl py-4 pl-6 pr-14 backdrop-blur-xl shadow-lg focus:outline-none focus:bg-black/60 transition-all text-lg font-light" placeholder="Change location..." value={location} onChange={(e) => setLocation(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} />
                                         <button onClick={handleSearch} className="absolute inset-y-2 right-2 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 text-white/50 hover:text-white transition-colors"><Search size={16} /></button>
@@ -593,11 +601,11 @@ export default function App({ username }) {
                                             <span className="text-[10px] uppercase tracking-[0.25em] font-bold text-white/70">{currentDisplay.city}, {currentDisplay.country}</span>
                                         </div>
                                     </div>
-                                    <div className="relative inline-block py-4">
+                                    <div id="main-temp" className="relative inline-block py-4">
                                         <h1 className="text-[20vw] lg:text-[15rem] xl:text-[18rem] leading-[0.8] font-[100] tracking-tighter text-white mix-blend-overlay select-none">{Math.round(currentDisplay.temp)}°</h1>
                                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-white/5 blur-[100px] rounded-full -z-10 pointer-events-none"></div>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-16 w-full max-w-5xl mx-auto relative z-20">
+                                    <div id="stats-grid" className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-16 w-full max-w-5xl mx-auto relative z-20">
                                         {[{ icon: Wind, value: currentDisplay.wind, unit: 'KM/H', label: 'Wind Velocity' }, { icon: Droplets, value: currentDisplay.humidity, unit: '%', label: 'Humidity' }, { icon: Gauge, value: Math.round(currentDisplay.pressure), unit: 'hPa', label: 'Pressure' }].map((stat, i) => (
                                             <div key={i} className="flex flex-col items-center justify-center p-8 rounded-[2rem] transition-all duration-500 group w-full border border-transparent hover:bg-white/5 hover:backdrop-blur-md hover:border-white/5">
                                                 <stat.icon size={28} className="text-white/30 mb-4 group-hover:text-white/80 transition-colors" />
@@ -607,8 +615,8 @@ export default function App({ username }) {
                                         ))}
                                     </div>
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10 w-full mt-20 max-w-7xl mx-auto relative z-20">
-                                        <div className="w-full h-[350px] lg:h-[400px]">{currentDisplay.hourly && <ForecastGraph data={currentDisplay.hourly} />}</div>
-                                        <div className="w-full h-[350px] lg:h-[400px]">{(currentDisplay.lat && currentDisplay.lon) && <LocationMap lat={currentDisplay.lat} lon={currentDisplay.lon} />}</div>
+                                        <div id="forecast-graph" className="w-full h-[350px] lg:h-[400px]">{currentDisplay.hourly && <ForecastGraph data={currentDisplay.hourly} />}</div>
+                                        <div id="location-map" className="w-full h-[350px] lg:h-[400px]">{(currentDisplay.lat && currentDisplay.lon) && <LocationMap lat={currentDisplay.lat} lon={currentDisplay.lon} />}</div>
                                     </div>
                                 </div>
                             </>
