@@ -57,6 +57,7 @@ const playThunderSound = () => {
     }
 };
 
+import { useUX } from '../../context/UXContext';
 import ImprovementWrapper from '../../components/imp/ImprovementWrapper';
 
 // --- COMPONENTS ---
@@ -462,6 +463,12 @@ export default function App({ username }) {
     const [soundEnabled, setSoundEnabled] = useState(false);
     const [showSearch, setShowSearch] = useState(true);
     const navigate = useNavigate();
+
+    // Wire up UX Improvements
+    const { loadImprovementsForPage } = useUX();
+    useEffect(() => {
+        loadImprovementsForPage('WeatherPage');
+    }, [loadImprovementsForPage]);
 
     const [godOverride, setGodOverride] = useState({
         active: false,

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useCallback } from 'react';
 import { ImprovementService } from '../services/ImprovementService';
 
 const UXContext = createContext();
@@ -7,59 +7,59 @@ export const useUX = () => useContext(UXContext);
 
 export const UXProvider = ({ children }) => {
     const [areImprovementsEnabled, setAreImprovementsEnabled] = useState(false);
-    const [displayMode, setDisplayMode] = useState('HOVER'); 
+    const [displayMode, setDisplayMode] = useState('HOVER');
     const [currentImprovements, setCurrentImprovements] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    const [sidebarOpen, setSidebarOpen] = useState(false);       
-    const [hoverModeActive, setHoverModeActive] = useState(false); 
-    const [highlightedId, setHighlightedId] = useState(null);      
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [hoverModeActive, setHoverModeActive] = useState(false);
+    const [highlightedId, setHighlightedId] = useState(null);
 
 
-    const loadImprovementsForPage = async (pageName) => {
+    const loadImprovementsForPage = useCallback(async (pageName) => {
         setLoading(true);
         try {
             const data = await ImprovementService.getByPage(pageName);
             setCurrentImprovements(data);
         } catch (error) {
             console.error("Fehler beim Laden der Improvements:", error);
-            setCurrentImprovements([]); 
+            setCurrentImprovements([]);
         }
         setLoading(false);
-    };
+    }, []);
 
 
-    const toggleImprovements = () => {
+    const toggleImprovements = useCallback(() => {
         setAreImprovementsEnabled(prev => {
             const newState = !prev;
-            
+
 
             if (!newState) {
-                setSidebarOpen(false);     
-                setHoverModeActive(false); 
-                setHighlightedId(null);    
+                setSidebarOpen(false);
+                setHoverModeActive(false);
+                setHighlightedId(null);
             } else {
-                setSidebarOpen(true);     
+                setSidebarOpen(true);
             }
-            
+
             return newState;
         });
-    };
+    }, []);
 
 
-    const setMode = (mode) => {
+    const setMode = useCallback((mode) => {
         setDisplayMode(mode);
-    };
+    }, []);
 
-    const getImprovementForUI = (uiName) => {
+    const getImprovementForUI = useCallback((uiName) => {
         if (!currentImprovements) return null;
         return currentImprovements.find(item => item.uiName === uiName);
-    };
+    }, [currentImprovements]);
 
 
-    const toggleSidebar = () => setSidebarOpen(prev => !prev);
-    const toggleHoverMode = () => setHoverModeActive(prev => !prev);
-    const setHighlight = (id) => setHighlightedId(id);
+    const toggleSidebar = useCallback(() => setSidebarOpen(prev => !prev), []);
+    const toggleHoverMode = useCallback(() => setHoverModeActive(prev => !prev), []);
+    const setHighlight = useCallback((id) => setHighlightedId(id), []);
 
 
     const value = {
@@ -71,14 +71,14 @@ export const UXProvider = ({ children }) => {
         toggleImprovements,
         setMode,
         getImprovementForUI,
-        improverActive: areImprovementsEnabled, 
+        improverActive: areImprovementsEnabled,
         toggleImprover: toggleImprovements,
-        sidebarOpen, 
+        sidebarOpen,
         setSidebarOpen,
         toggleSidebar,
-        hoverModeActive, 
+        hoverModeActive,
         toggleHoverMode,
-        highlightedId, 
+        highlightedId,
         setHighlight
     };
 
