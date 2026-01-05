@@ -22,6 +22,7 @@ export default {
                 'shake-wind': 'shake-wind 0.5s ease-in-out infinite',
                 'wind-fly': 'wind-fly linear infinite',
                 'fall': 'fall linear infinite',
+                'fall-slow': 'fall linear infinite',
                 'flash': 'flash 3s infinite',
                 'fog-drift': 'fog-drift 20s linear infinite',
             },
