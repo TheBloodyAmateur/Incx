@@ -5,9 +5,9 @@ const ForecastGraph = ({ data }) => {
     const [hoverIndex, setHoverIndex] = useState(null);
 
     const width = 800;
-    const height = 220; // Slightly increased height to accommodate tooltip
+    const height = 220;
     const paddingX = 30;
-    const paddingY = 50; // Increased top padding for tooltip space
+    const paddingY = 60; // Increased top padding for HTML tooltip space
 
     const hourly = data.time.slice(0, 24).map((time, i) => ({
         hour: new Date(time).getHours(),
@@ -50,112 +50,95 @@ const ForecastGraph = ({ data }) => {
                 {/* Header info removed, moved inside graph */}
             </div>
 
-            <div className="relative flex-1 w-full bg-white/5 rounded-2xl overflow-hidden backdrop-blur-md border border-white/5 shadow-inner cursor-none min-h-[200px]">
-                {/* Use preserveAspectRatio to ensure graph scales nicely in flex container */}
-                <svg
-                    viewBox={`0 0 ${width} ${height}`}
-                    preserveAspectRatio="none"
-                    className="w-full h-full overflow-visible"
-                    onMouseLeave={() => setHoverIndex(null)}
-                >
-                    <defs>
-                        <linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
-                            <stop offset="0%" stopColor="currentColor" stopOpacity="0.2" />
-                            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-                        </linearGradient>
-                        <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stopColor="white" stopOpacity="0.1" />
-                            <stop offset="50%" stopColor="white" stopOpacity="0.8" />
-                            <stop offset="100%" stopColor="white" stopOpacity="0.1" />
-                        </linearGradient>
-                    </defs>
+            {/* Outer Container: Relative, No Overflow Clipping */}
+            <div className="relative flex-1 w-full min-h-[200px]">
 
-                    {/* Guidelines */}
-                    <line x1={paddingX} y1={height / 2} x2={width - paddingX} y2={height / 2} stroke="white" strokeOpacity="0.05" strokeDasharray="4 4" />
+                {/* Background & Graph Layer: Clipped */}
+                <div className="absolute inset-0 w-full h-full bg-white/5 rounded-2xl overflow-hidden backdrop-blur-md border border-white/5 shadow-inner cursor-none">
+                    <svg
+                        viewBox={`0 0 ${width} ${height}`}
+                        preserveAspectRatio="none"
+                        className="w-full h-full overflow-visible"
+                        onMouseLeave={() => setHoverIndex(null)}
+                    >
+                        <defs>
+                            <linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
+                                <stop offset="0%" stopColor="currentColor" stopOpacity="0.2" />
+                                <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+                            </linearGradient>
+                            <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stopColor="white" stopOpacity="0.1" />
+                                <stop offset="50%" stopColor="white" stopOpacity="0.8" />
+                                <stop offset="100%" stopColor="white" stopOpacity="0.1" />
+                            </linearGradient>
+                        </defs>
 
-                    <path d={areaPath} fill="url(#areaGradient)" className="text-white" />
-                    <path d={pathData} fill="none" stroke="url(#lineGradient)" strokeWidth="2" strokeLinecap="round" className="drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] vector-effect-non-scaling-stroke" />
+                        {/* Guidelines */}
+                        <line x1={paddingX} y1={height / 2} x2={width - paddingX} y2={height / 2} stroke="white" strokeOpacity="0.05" strokeDasharray="4 4" />
 
-                    {/* Hover Areas: Invisible Rects covering full height for easy selection */}
-                    {hourly.map((_, i) => (
-                        <rect
-                            key={i}
-                            x={getX(i) - (width / hourly.length) / 2}
-                            y={0}
-                            width={width / hourly.length}
-                            height={height}
-                            fill="transparent"
-                            className="cursor-crosshair"
-                            onMouseEnter={() => setHoverIndex(i)}
-                        />
-                    ))}
+                        <path d={areaPath} fill="url(#areaGradient)" className="text-white" />
+                        <path d={pathData} fill="none" stroke="url(#lineGradient)" strokeWidth="2" strokeLinecap="round" className="drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] vector-effect-non-scaling-stroke" />
 
-                    {hoverIndex !== null && (
-                        <g className="transition-all duration-300 ease-out pointer-events-none">
-                            {/* Vertical Indicator Line */}
-                            <line
-                                x1={points[hoverIndex].x}
-                                y1={paddingY}
-                                x2={points[hoverIndex].x}
-                                y2={height}
-                                stroke="white"
-                                strokeWidth="1"
-                                strokeOpacity="0.2"
-                                strokeDasharray="4 4"
-                                vectorEffect="non-scaling-stroke"
+                        {/* Hover Areas: Invisible Rects covering full height for easy selection */}
+                        {hourly.map((_, i) => (
+                            <rect
+                                key={i}
+                                x={getX(i) - (width / hourly.length) / 2}
+                                y={0}
+                                width={width / hourly.length}
+                                height={height}
+                                fill="transparent"
+                                className="cursor-crosshair"
+                                onMouseEnter={() => setHoverIndex(i)}
                             />
+                        ))}
 
-                            {/* Active Point */}
-                            <circle
-                                cx={points[hoverIndex].x}
-                                cy={points[hoverIndex].y}
-                                r="4"
-                                fill="white"
-                                className="shadow-[0_0_15px_rgba(255,255,255,1)]"
-                            />
-
-                            {/* Tooltip in Graph */}
-                            <g transform={`translate(${points[hoverIndex].x}, ${points[hoverIndex].y - 45})`}>
-                                {/* Background Pill */}
-                                <rect
-                                    x="-35"
-                                    y="0"
-                                    width="70"
-                                    height="35"
-                                    rx="8"
-                                    fill="#000"
-                                    fillOpacity="0.8"
-                                    stroke="rgba(255,255,255,0.2)"
+                        {hoverIndex !== null && (
+                            <g className="transition-all duration-300 ease-out pointer-events-none">
+                                {/* Vertical Indicator Line */}
+                                <line
+                                    x1={points[hoverIndex].x}
+                                    y1={paddingY}
+                                    x2={points[hoverIndex].x}
+                                    y2={height}
+                                    stroke="white"
                                     strokeWidth="1"
+                                    strokeOpacity="0.2"
+                                    strokeDasharray="4 4"
+                                    vectorEffect="non-scaling-stroke"
                                 />
-                                {/* Temp Text */}
-                                <text
-                                    x="0"
-                                    y="16"
-                                    textAnchor="middle"
+
+                                {/* Active Point */}
+                                <circle
+                                    cx={points[hoverIndex].x}
+                                    cy={points[hoverIndex].y}
+                                    r="4"
                                     fill="white"
-                                    fontSize="14"
-                                    fontWeight="bold"
-                                    style={{ fontFeatureSettings: '"tnum"' }}
-                                >
-                                    {Math.round(hourly[hoverIndex].temp)}°
-                                </text>
-                                {/* Time Text */}
-                                <text
-                                    x="0"
-                                    y="29"
-                                    textAnchor="middle"
-                                    fill="rgba(255,255,255,0.6)"
-                                    fontSize="9"
-                                    fontWeight="medium"
-                                    style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}
-                                >
-                                    {hourly[hoverIndex].hour}:00
-                                </text>
+                                    className="shadow-[0_0_15px_rgba(255,255,255,1)]"
+                                />
+
                             </g>
-                        </g>
-                    )}
-                </svg>
+                        )}
+                    </svg>
+                </div>
+
+                {/* HTML Tooltip Overlay: Unclipped */}
+                {hoverIndex !== null && (
+                    <div
+                        className="absolute pointer-events-none z-50 flex flex-col items-center transition-all duration-75 ease"
+                        style={{
+                            left: `${(points[hoverIndex].x / width) * 100}%`,
+                            top: `${(points[hoverIndex].y / height) * 100}%`,
+                            transform: 'translate(-50%, -100%) translateY(-15px)'
+                        }}
+                    >
+                        <div className="bg-black/90 backdrop-blur-xl px-5 py-3 rounded-2xl border border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.5)] flex flex-col items-center min-w-[80px]">
+                            <span className="text-3xl font-bold text-white tracking-tighter leading-none mb-1">{Math.round(hourly[hoverIndex].temp)}°</span>
+                            <span className="text-[9px] text-white/50 font-bold tracking-[0.2em]">{String(hourly[hoverIndex].hour).padStart(2, '0')}:00</span>
+                        </div>
+                        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-black/90 -mt-[1px] opacity-90"></div>
+                    </div>
+                )}
             </div>
         </div>
     );
