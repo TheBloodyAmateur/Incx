@@ -72,13 +72,13 @@ const DraggableCloud = ({ initialX, initialY, scale, opacity }) => {
         let animationFrameId;
         const animate = () => {
             if (!isDragging) {
-                // Slow drift back
+                // Return to origin (Faster return: 20s cycle logic approx)
                 const dx = initialX - currentPos.current.x;
                 const dy = initialY - currentPos.current.y;
 
-                if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
-                    currentPos.current.x += dx * 0.005;
-                    currentPos.current.y += dy * 0.005;
+                if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+                    currentPos.current.x += dx * 0.0005; // Much slower return
+                    currentPos.current.y += dy * 0.0005;
                     setPos({ ...currentPos.current });
                 }
             }
@@ -121,20 +121,25 @@ const DraggableCloud = ({ initialX, initialY, scale, opacity }) => {
 
     return (
         <div
-            onMouseDown={handleMouseDown}
-            className={`absolute transition-transform will-change-transform ${isDragging ? 'cursor-grabbing scale-105' : 'cursor-grab'} ease-out`}
+            className={`absolute transition-transform will-change-transform ease-out`}
             style={{
                 left: pos.x,
                 top: pos.y,
                 transform: `scale(${scale})`,
                 opacity: opacity,
                 zIndex: 70,
-                pointerEvents: 'auto'
+                pointerEvents: 'none' // Container doesn't block interactions outside the cloud
             }}
         >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-64 h-40 text-white/80 filter drop-shadow-2xl">
-                <path d="M17.5,19c-0.3,0-0.5,0-0.8-0.1c-0.1,0-0.2,0-0.2,0c-1.6,2-4.6,2.3-6.6,0.7c-0.4-0.3-0.8-0.7-1.1-1.1 c-2.2,0.3-4.3-1.2-4.6-3.4c0-0.2,0-0.5,0-0.7C2.8,12.8,2,10.5,3.6,8.8c1.2-1.3,3.1-1.6,4.7-0.9c1.1-2.4,3.9-3.5,6.3-2.4 c1.6,0.7,2.8,2.2,3.1,3.9c2.6,0.1,4.6,2.3,4.5,4.9C22.1,16.9,20,19,17.5,19z" />
-            </svg>
+            {/* Hit Box - This is the actual interactive area */}
+            <div
+                onMouseDown={handleMouseDown}
+                className={`w-64 h-40 pointer-events-auto ${isDragging ? 'cursor-grabbing scale-105' : 'cursor-grab'} transition-transform`}
+            >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full text-white/80 filter drop-shadow-2xl">
+                    <path d="M17.5,19c-0.3,0-0.5,0-0.8-0.1c-0.1,0-0.2,0-0.2,0c-1.6,2-4.6,2.3-6.6,0.7c-0.4-0.3-0.8-0.7-1.1-1.1 c-2.2,0.3-4.3-1.2-4.6-3.4c0-0.2,0-0.5,0-0.7C2.8,12.8,2,10.5,3.6,8.8c1.2-1.3,3.1-1.6,4.7-0.9c1.1-2.4,3.9-3.5,6.3-2.4 c1.6,0.7,2.8,2.2,3.1,3.9c2.6,0.1,4.6,2.3,4.5,4.9C22.1,16.9,20,19,17.5,19z" />
+                </svg>
+            </div>
         </div>
     );
 };
@@ -217,7 +222,7 @@ const LocationMap = ({ lat, lon }) => {
 const ForecastGraph = ({ data }) => {
     if (!data || data.length === 0) return null;
     const [hoverIndex, setHoverIndex] = useState(null);
-    const width = 800; const height = 240; const paddingX = 30; const paddingY = 60;
+    const width = 800; const height = 240; const paddingX = 30; const paddingY = 60; // Increased padding for tooltip
 
     const hourly = data.time.slice(0, 24).map((time, i) => ({ hour: new Date(time).getHours(), temp: data.temperature_2m[i] }));
     const minTemp = Math.min(...hourly.map(d => d.temp)) - 2;
@@ -251,37 +256,60 @@ const ForecastGraph = ({ data }) => {
             <div className="flex justify-between items-end mb-4 px-2 flex-shrink-0">
                 <h3 className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/30 group-hover:text-white/50 transition-colors">24h Projection</h3>
             </div>
-            <div className="relative flex-1 w-full rounded-3xl overflow-hidden min-h-[300px] transition-all duration-500 hover:bg-white/5">
-                <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="w-full h-full overflow-visible" onMouseLeave={() => setHoverIndex(null)}>
-                    <defs>
-                        <linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
-                            <stop offset="0%" stopColor="currentColor" stopOpacity="0.1" />
-                            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-                        </linearGradient>
-                        <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stopColor="white" stopOpacity="0.1" />
-                            <stop offset="50%" stopColor="white" stopOpacity="0.6" />
-                            <stop offset="100%" stopColor="white" stopOpacity="0.1" />
-                        </linearGradient>
-                    </defs>
-                    <line x1={paddingX} y1={height / 2} x2={width - paddingX} y2={height / 2} stroke="white" strokeOpacity="0.05" strokeDasharray="4 4" />
-                    <path d={areaPath} fill="url(#areaGradient)" className="text-white transition-opacity duration-300" />
-                    <path d={pathData} fill="none" stroke="url(#lineGradient)" strokeWidth="2" strokeLinecap="round" className="drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] vector-effect-non-scaling-stroke" />
-                    {hourly.map((_, i) => (
-                        <rect key={i} x={getX(i) - (width / hourly.length) / 2} y={0} width={width / hourly.length} height={height} fill="transparent" onMouseEnter={() => setHoverIndex(i)} className="cursor-none" />
-                    ))}
-                    {hoverIndex !== null && (
-                        <g className="transition-all duration-300 ease-out pointer-events-none">
-                            <line x1={points[hoverIndex].x} y1={paddingY} x2={points[hoverIndex].x} y2={height} stroke="white" strokeWidth="1" strokeOpacity="0.2" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
-                            <circle cx={points[hoverIndex].x} cy={points[hoverIndex].y} r="5" fill="white" className="shadow-[0_0_20px_rgba(255,255,255,0.8)]" />
-                            <g transform={`translate(${points[hoverIndex].x}, ${points[hoverIndex].y - 50})`}>
-                                <rect x="-40" y="0" width="80" height="40" rx="10" fill="#000" fillOpacity="0.9" stroke="rgba(255,255,255,0.2)" strokeWidth="1" className="drop-shadow-xl" />
-                                <text x="0" y="19" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold" style={{ fontFeatureSettings: '"tnum"' }}>{Math.round(hourly[hoverIndex].temp)}°</text>
-                                <text x="0" y="33" textAnchor="middle" fill="rgba(255,255,255,0.6)" fontSize="10" fontWeight="500" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>{hourly[hoverIndex].hour}:00</text>
+
+            {/* Outer Container: Relative, No Overflow Clipping */}
+            <div className="relative flex-1 w-full min-h-[300px]">
+
+                {/* Background & Graph Layer: Clipped */}
+                <div className="absolute inset-0 w-full h-full rounded-3xl overflow-hidden backdrop-blur-md transition-all duration-500 hover:bg-white/5 shadow-inner cursor-none">
+                    <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="w-full h-full overflow-visible" onMouseLeave={() => setHoverIndex(null)}>
+                        <defs>
+                            <linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
+                                <stop offset="0%" stopColor="currentColor" stopOpacity="0.1" />
+                                <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+                            </linearGradient>
+                            <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stopColor="white" stopOpacity="0.1" />
+                                <stop offset="50%" stopColor="white" stopOpacity="0.6" />
+                                <stop offset="100%" stopColor="white" stopOpacity="0.1" />
+                            </linearGradient>
+                        </defs>
+                        <line x1={paddingX} y1={height / 2} x2={width - paddingX} y2={height / 2} stroke="white" strokeOpacity="0.05" strokeDasharray="4 4" />
+                        <path d={areaPath} fill="url(#areaGradient)" className="text-white transition-opacity duration-300" />
+                        <path d={pathData} fill="none" stroke="url(#lineGradient)" strokeWidth="2" strokeLinecap="round" className="drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] vector-effect-non-scaling-stroke" />
+
+                        {/* Hover Areas */}
+                        {hourly.map((_, i) => (
+                            <rect key={i} x={getX(i) - (width / hourly.length) / 2} y={0} width={width / hourly.length} height={height} fill="transparent" onMouseEnter={() => setHoverIndex(i)} className="cursor-none" />
+                        ))}
+
+                        {/* Active Line & Point (Inside SVG) */}
+                        {hoverIndex !== null && (
+                            <g className="transition-all duration-300 ease-out pointer-events-none">
+                                <line x1={points[hoverIndex].x} y1={paddingY} x2={points[hoverIndex].x} y2={height} stroke="white" strokeWidth="1" strokeOpacity="0.2" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
+                                <circle cx={points[hoverIndex].x} cy={points[hoverIndex].y} r="5" fill="white" className="shadow-[0_0_20px_rgba(255,255,255,0.8)]" />
                             </g>
-                        </g>
-                    )}
-                </svg>
+                        )}
+                    </svg>
+                </div>
+
+                {/* HTML Tooltip Overlay: Unclipped */}
+                {hoverIndex !== null && (
+                    <div
+                        className="absolute pointer-events-none z-50 flex flex-col items-center transition-all duration-75 ease"
+                        style={{
+                            left: `${(points[hoverIndex].x / width) * 100}%`,
+                            top: `${(points[hoverIndex].y / height) * 100}%`,
+                            transform: 'translate(-50%, -100%) translateY(-15px)'
+                        }}
+                    >
+                        <div className="bg-black/90 backdrop-blur-xl px-5 py-3 rounded-2xl border border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.5)] flex flex-col items-center min-w-[80px]">
+                            <span className="text-3xl font-bold text-white tracking-tighter leading-none mb-1">{Math.round(hourly[hoverIndex].temp)}°</span>
+                            <span className="text-[9px] text-white/50 font-bold tracking-[0.2em]">{String(hourly[hoverIndex].hour).padStart(2, '0')}:00</span>
+                        </div>
+                        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-black/90 -mt-[1px] opacity-90"></div>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -292,6 +320,7 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
 
     const isWindy = windSpeed > 20;
     const isThunder = weatherType === 'thunder';
+    const isSunny = weatherType === 'clear';
 
     useEffect(() => {
         if (isThunder && soundEnabled) {
@@ -311,9 +340,9 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
     const snowParticles = useMemo(() => [...Array(200)].map((_, i) => ({
         id: i,
         left: Math.random() * 100,
-        duration: 4 + Math.random() * 4,
-        delay: Math.random() * 5,
-        size: 4 + Math.random() * 4 // Larger flakes
+        duration: 2 + Math.random() * 4, // Faster fall
+        delay: Math.random() * 2,
+        size: 8 + Math.random() * 8 // Bigger flakes
     })), []);
 
     const windParticles = useMemo(() => [...Array(30)].map((_, i) => ({
@@ -323,44 +352,28 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
         delay: Math.random() * 2
     })), []);
 
-    // Cloud positions
-    const [clouds, setClouds] = useState([]);
-    useEffect(() => {
-        const c = [];
-        const w = window.innerWidth;
-        const h = window.innerHeight;
-        const padding = 150;
-        for (let i = 0; i < 10; i++) {
-            c.push({
-                id: i,
-                x: padding + Math.random() * (w - padding * 2),
-                y: padding + Math.random() * (h * 0.5),
-                scale: 1.5 + Math.random() * 2.5,
-                opacity: 0.8 + Math.random() * 0.2
-            });
-        }
-        setClouds(c);
-    }, []);
+
 
     // Effect Conditions
     const showRain = weatherType === 'rain' || weatherType === 'thunder';
     const showThunderFlash = weatherType === 'thunder';
     const showWind = isWindy || weatherType === 'thunder';
-    // Show clouds only if cloudy (no rain/snow/thunder mix)
-    const showClouds = weatherType === 'cloudy';
     const showSnow = weatherType === 'snow';
 
     return (
-        <div className={`fixed inset-0 pointer-events-none z-[50] overflow-hidden ${showThunderFlash ? 'animate-shake-wind' : ''}`}>
+        <div className={`fixed inset-0 pointer-events-none z-20 overflow-hidden ${showThunderFlash ? 'animate-shake-wind' : ''}`}>
+
+            {/* SUN GLARE */}
+            {isSunny && (
+                <div className="absolute top-[-20%] left-[-20%] w-[150vw] h-[150vh] z-[15] pointer-events-none mix-blend-screen opacity-60 animate-pulse-slow"
+                    style={{
+                        background: 'radial-gradient(circle at 80% 20%, rgba(255,255,200,0.8) 0%, rgba(255,200,100,0.4) 20%, transparent 60%)'
+                    }}
+                ></div>
+            )}
 
             {/* CLOUDS */}
-            {showClouds && (
-                <div className="absolute inset-0 pointer-events-auto z-[70]">
-                    {clouds.map(cloud => (
-                        <DraggableCloud key={cloud.id} initialX={cloud.x} initialY={cloud.y} scale={cloud.scale} opacity={cloud.opacity} />
-                    ))}
-                </div>
-            )}
+
 
             {/* RAIN */}
             {showRain && (
@@ -382,11 +395,11 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
 
             {/* SNOW */}
             {showSnow && (
-                <div className="absolute inset-0 z-[60]">
+                <div className="absolute inset-0 z-[80]">
                     {snowParticles.map((p) => (
                         <div
                             key={p.id}
-                            className="absolute bg-white rounded-full blur-[1px] animate-fall-slow opacity-90"
+                            className="absolute bg-white rounded-full animate-fall-slow opacity-100 shadow-[0_0_8px_rgba(255,255,255,1)]"
                             style={{
                                 width: `${p.size}px`, height: `${p.size}px`,
                                 left: `${p.left}%`,
@@ -404,18 +417,15 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
                 <div className="absolute inset-0 bg-white animate-flash opacity-0 mix-blend-overlay z-[56]"></div>
             )}
 
-            {/* FOG - Soft Hole */}
+            {/* FOG - Clear Hole via Mask */}
             {weatherType === 'fog' && (
-                <>
-                    <div className="absolute inset-0 bg-white/70 backdrop-blur-[8px] transition-all duration-1000 z-[65]"></div>
-                    <div
-                        className="absolute inset-0 pointer-events-none z-[66] transition-all duration-75 ease-out"
-                        style={{
-                            // Soft gradient mask for smooth hole
-                            background: `radial-gradient(circle 250px at ${mousePos.x}px ${mousePos.y}px, transparent 0%, rgba(255,255,255,0.9) 60%)`
-                        }}
-                    />
-                </>
+                <div
+                    className="absolute inset-0 bg-white/80 backdrop-blur-[12px] z-[65] transition-all duration-1000"
+                    style={{
+                        maskImage: `radial-gradient(circle 300px at ${mousePos.x}px ${mousePos.y}px, transparent 0%, black 50%)`,
+                        WebkitMaskImage: `radial-gradient(circle 300px at ${mousePos.x}px ${mousePos.y}px, transparent 0%, black 50%)`
+                    }}
+                ></div>
             )}
 
             {/* WIND */}
@@ -446,8 +456,9 @@ export default function App({ username }) {
     const [location, setLocation] = useState('');
     const [weatherData, setWeatherData] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const [error, setError] = useState(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    const [isGodMinimized, setIsGodMinimized] = useState(false);
     const [soundEnabled, setSoundEnabled] = useState(false);
     const [showSearch, setShowSearch] = useState(true);
     const navigate = useNavigate();
@@ -473,6 +484,44 @@ export default function App({ username }) {
         window.addEventListener('mousemove', handleMouseMove);
         return () => window.removeEventListener('mousemove', handleMouseMove);
     }, []);
+
+    // Cloud Logic (Moved to Main Flow)
+    const [clouds, setClouds] = useState([]);
+    useEffect(() => {
+        const c = [];
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        for (let i = 0; i < 6; i++) {
+            c.push({
+                id: i,
+                x: Math.random() * w,
+                y: Math.random() * (h * 0.7),
+                scale: 1.5 + Math.random() * 2.5,
+                opacity: 0.8 + Math.random() * 0.2
+            });
+        }
+        setClouds(c);
+    }, []);
+
+    // Cleanup override when mode changes from GOD to something else
+    useEffect(() => {
+        if (mode !== 'god') {
+            setGodOverride(prev => ({ ...prev, active: false }));
+        }
+    }, [mode]);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'g') {
+                e.preventDefault();
+                if (mode === 'god') {
+                    setIsGodMinimized(prev => !prev);
+                }
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [mode]);
 
     const handleSearch = async () => {
         if (!location) return;
@@ -520,42 +569,68 @@ export default function App({ username }) {
     const isEffectsActive = mode !== 'dev';
 
     const getBgClass = () => {
-        if (!weatherData && !godOverride.active) return 'bg-gradient-to-br from-zinc-900 via-zinc-950 to-black';
-        switch (weatherType) {
-            case 'rain': return 'bg-gradient-to-b from-slate-900 via-slate-950 to-black';
-            case 'snow': return 'bg-gradient-to-b from-zinc-800 via-zinc-900 to-black';
-            case 'thunder': return 'bg-gradient-to-b from-indigo-950 via-slate-950 to-black';
-            case 'fog': return 'bg-gradient-to-b from-zinc-800 to-zinc-950';
-            case 'cloudy': return 'bg-gradient-to-b from-stone-900 to-stone-950';
-            default: return 'bg-gradient-to-b from-sky-950 via-blue-950 to-slate-950';
+        const isWarm = currentDisplay.temp >= 20;
+        const isDev = mode === 'dev';
+
+        // DEV MODE: Logical Colors (Cold=Blue, Warm=Red)
+        if (isDev) {
+            if (isWarm) {
+                return 'bg-gradient-to-b from-orange-900 via-red-950 to-black';
+            } else {
+                return 'bg-gradient-to-b from-sky-950 via-blue-950 to-slate-950';
+            }
+        }
+
+        // NORMAL/GOD MODE: Inverted Logic (Cold=Red, Warm=Blue)
+        if (isWarm) {
+            return 'bg-gradient-to-b from-sky-950 via-blue-950 to-slate-950';
+        } else {
+            return 'bg-gradient-to-b from-orange-900 via-red-950 to-black';
         }
     };
 
-    // SHAKE: Apply shake to content if windy (speed scales intensity in theory, here boolean)
-    const boxShakeClass = (isEffectsActive && currentDisplay.wind > 20) ? 'animate-shake-wind' : '';
+    const getTextClass = () => {
+        const isWarm = currentDisplay.temp >= 20;
+        const isDev = mode === 'dev';
 
-    return (
-        <div className={`min-h-screen w-full relative overflow-x-hidden transition-colors duration-1000 ${getBgClass()} text-white font-sans selection:bg-white/20 selection:text-white cursor-none`}>
+        // DEV MODE: Readable White
+        if (isDev) return 'text-white';
 
-            <CustomCursor />
+        // NORMAL/GOD MODE: Chameleon Tone-on-Tone (Bad Readability)
+        // Cold (< 20) -> Red Bg -> Red Text
+        // Warm (>= 20) -> Blue Bg -> Blue Text
+        if (isWarm) {
+            return 'text-blue-950';
+        } else {
+            return 'text-red-950';
+        }
+    };
 
-            <WeatherOverlay
-                weatherType={weatherType}
-                windSpeed={currentDisplay.wind}
-                mousePos={mousePos}
-                active={isEffectsActive}
-                soundEnabled={soundEnabled}
-            />
+    // SHAKE: Apply shake to content if windy or thunder
+    const activeShakeClass = (isEffectsActive && (currentDisplay.wind > 20 || weatherType === 'thunder')) ? 'animate-shake-wind' : '';
 
-            <div className={`relative z-40 flex flex-col min-h-screen`}>
-                {/* TOP BAR */}
-                <div className="flex justify-between items-start p-8 w-full max-w-screen-2xl mx-auto">
-                    <div className="flex gap-4">
-                        <button onClick={() => navigate(`/dashboard?username=${username}`)} className={`p-3 rounded-full backdrop-blur-md transition-all duration-300 border border-white/5 hover:bg-white/10 text-white/80 hover:text-white`} title="Back to Dashboard"><Home size={18} /></button>
-                        {weatherData && (
-                            <button onClick={() => setShowSearch(!showSearch)} className={`p-3 rounded-full backdrop-blur-md transition-all duration-300 border border-white/5 ${showSearch ? 'bg-white text-black' : 'bg-white/5 hover:bg-white/10 text-white'}`}><X size={18} /></button>
-                        )}
-                        <button onClick={() => setSoundEnabled(!soundEnabled)} className={`p-3 rounded-full backdrop-blur-md border border-white/5 transition-all ${soundEnabled ? 'bg-white/10 text-white' : 'bg-transparent text-white/40 hover:text-white'}`}><Volume2 size={18} /></button>
+    const renderGodMenu = () => {
+        if (isGodMinimized) {
+            return (
+                <div className="fixed top-24 right-10 z-30">
+                    <button
+                        onClick={() => setIsGodMinimized(false)}
+                        className="w-12 h-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/20 hover:scale-110 transition-all shadow-xl"
+                    >
+                        <Settings2 size={24} />
+                    </button>
+                </div>
+            );
+        }
+
+
+
+        return (
+            <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl z-30 p-4">
+                <div className="bg-black/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 shadow-2xl text-white ring-1 ring-white/5 relative overflow-hidden cursor-none">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                    <div className="absolute top-6 right-8">
+                        <button onClick={() => setIsGodMinimized(true)} className="text-white/30 hover:text-white transition-colors"><div className="w-6 h-1 bg-current rounded-full"></div></button>
                     </div>
                     <div id="mode-switcher" className="relative flex bg-black/40 backdrop-blur-xl rounded-full p-1.5 border border-white/10 shadow-2xl">
                         {['normal', 'dev', 'god'].map((m) => (
@@ -563,27 +638,48 @@ export default function App({ username }) {
                         ))}
                     </div>
                 </div>
+            </div>
+        );
+    };
 
-                <div className={`flex-1 flex flex-col items-center justify-start pt-10 relative w-full max-w-[1400px] mx-auto px-6 pb-20`}>
+    return (
+        <ImprovementWrapper>
 
-                    <div className={`w-full flex flex-col items-center ${boxShakeClass}`} style={{ animationDuration: `${Math.max(0.1, 20 / (currentDisplay.wind || 1))}s` }}>
+            <div className={`min-h-screen w-full relative overflow-x-hidden transition-colors duration-1000 ${getBgClass()} ${getTextClass()} font-sans selection:bg-white/20 selection:text-white cursor-none`}>
 
-                        {(!weatherData && !godOverride.active) && (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center animate-fade-in z-50">
-                                <div className="text-center mb-16 space-y-6">
-                                    <div className="relative inline-block">
-                                        <h1 className="text-8xl md:text-9xl lg:text-[10rem] font-thin tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/50">incx</h1>
-                                        <div className="absolute -inset-8 bg-white/5 blur-[60px] rounded-full -z-10"></div>
-                                    </div>
-                                    <p className="text-white/30 uppercase tracking-[0.6em] text-[10px] md:text-xs font-medium">Inconvenient Weather App</p>
-                                </div>
-                                <div className="w-full max-w-xl relative group">
-                                    <div className="absolute -inset-[1px] bg-gradient-to-r from-white/10 via-white/20 to-white/10 rounded-[24px] opacity-0 group-hover:opacity-100 blur-lg transition-opacity duration-700"></div>
-                                    <input type="text" className="relative w-full bg-black/60 border border-white/10 text-white placeholder-white/20 rounded-[24px] py-8 pl-10 pr-24 backdrop-blur-2xl shadow-2xl focus:outline-none focus:bg-black/80 focus:border-white/20 transition-all text-2xl font-light tracking-wide" placeholder="Enter location..." value={location} onChange={(e) => setLocation(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} autoFocus />
-                                    <button onClick={handleSearch} className="absolute inset-y-3 right-3 w-16 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10 text-white transition-all duration-300 border border-white/5"><ArrowRight size={24} className="text-white/80" /></button>
-                                </div>
+                <CustomCursor />
+
+                <WeatherOverlay
+                    weatherType={weatherType}
+                    windSpeed={currentDisplay.wind}
+                    mousePos={mousePos}
+                    active={isEffectsActive}
+                    soundEnabled={soundEnabled}
+                />
+
+                <div className={`relative flex flex-col min-h-screen`}>
+
+                    {/* Clouds in Document Flow - z-30 to float ABOVE content but pass-through empty space */}
+                    {weatherType === 'cloudy' && (
+                        <div className="absolute inset-x-0 top-0 h-full pointer-events-none z-30">
+                            {clouds.map(cloud => (
+                                <DraggableCloud key={cloud.id} initialX={cloud.x} initialY={cloud.y} scale={cloud.scale} opacity={cloud.opacity} />
+                            ))}
+                        </div>
+                    )}
+                    {/* TOP BAR */}
+                    <div className="relative z-50 flex justify-between items-start p-8 w-full max-w-screen-2xl mx-auto pointer-events-none">
+                        <div className="flex gap-4 relative z-50 pointer-events-auto">
+                            <button onClick={() => navigate(`/dashboard?username=${username}`)} className={`p-3 rounded-full backdrop-blur-md transition-all duration-300 border border-white/5 hover:bg-white/10 text-white/80 hover:text-white`} title="Back to Dashboard"><Home size={18} /></button>
+                            <button onClick={() => setSoundEnabled(!soundEnabled)} className={`p-3 rounded-full backdrop-blur-md border border-white/5 transition-all ${soundEnabled ? 'bg-white/10 text-white' : 'bg-transparent text-white/40 hover:text-white'}`}><Volume2 size={18} /></button>
+                        </div>
+                        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-3 z-40 pointer-events-auto w-full max-w-md">
+                            {/* MODE SWITCHER */}
+                            <div className="flex bg-black/40 backdrop-blur-xl rounded-full p-1.5 border border-white/10 shadow-2xl">
+                                {['normal', 'dev', 'god'].map((m) => (
+                                    <button key={m} onClick={() => setMode(m)} className={`relative px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${mode === m ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>{m}</button>
+                                ))}
                             </div>
-                        )}
 
                         {(weatherData || godOverride.active) && (
                             <>
@@ -593,13 +689,24 @@ export default function App({ username }) {
                                         <button onClick={handleSearch} className="absolute inset-y-2 right-2 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 text-white/50 hover:text-white transition-colors"><Search size={16} /></button>
                                     </div>
                                 </div>
+                            )}
+                        </div>
 
-                                <div className="text-center space-y-2 animate-slide-up w-full">
-                                    <div className="flex justify-center mb-6">
-                                        <div className="flex items-center gap-3 px-6 py-2 rounded-full bg-white/5 border border-white/5 backdrop-blur-md hover:bg-white/10 transition-colors">
-                                            <MapPin size={12} className="text-white/50" />
-                                            <span className="text-[10px] uppercase tracking-[0.25em] font-bold text-white/70">{currentDisplay.city}, {currentDisplay.country}</span>
+                        {/* TOP RIGHT - REMOVED OLD SEARCH */}
+                    </div>
+
+                    <div className={`flex-1 flex flex-col items-center justify-start pt-12 relative z-10 w-full max-w-[1400px] mx-auto px-6 pb-20`}>
+
+                        <div className={`w-full flex flex-col items-center ${activeShakeClass}`} style={{ animationDuration: `${Math.max(0.1, 20 / (currentDisplay.wind || 1))}s` }}>
+
+                            {(!weatherData && !godOverride.active) && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center animate-fade-in z-50">
+                                    <div className="text-center mb-16 space-y-6">
+                                        <div className="relative inline-block">
+                                            <h1 className="text-8xl md:text-9xl lg:text-[10rem] font-thin tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/50">incx</h1>
+                                            <div className="absolute -inset-8 bg-white/5 blur-[60px] rounded-full -z-10"></div>
                                         </div>
+                                        <p className="text-white/30 uppercase tracking-[0.6em] text-[10px] md:text-xs font-medium">Inconvenient Weather App</p>
                                     </div>
                                     <div id="main-temp" className="relative inline-block py-4">
                                         <h1 className="text-[20vw] lg:text-[15rem] xl:text-[18rem] leading-[0.8] font-[100] tracking-tighter text-white mix-blend-overlay select-none">{Math.round(currentDisplay.temp)}°</h1>
@@ -653,21 +760,47 @@ export default function App({ username }) {
                                         <button onClick={() => setGodOverride(prev => ({ ...prev, windSpeed: 100 }))} className={`aspect-square rounded-2xl flex items-center justify-center transition-all duration-300 border ${godOverride.windSpeed >= 100 ? 'bg-white text-black border-white scale-105' : 'bg-white/5 border-transparent hover:bg-white/10'}`}><Wind size={22} /></button>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-10">
-                                    <div className="group">
-                                        <div className="flex justify-between text-[10px] font-bold text-white/30 uppercase tracking-widest mb-4 pl-1"><span>Wind Velocity</span><span className="text-white group-hover:text-white/80 transition-colors">{godOverride.windSpeed} km/h</span></div>
-                                        <input type="range" min="0" max="120" className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-white hover:accent-gray-200 transition-all" value={godOverride.windSpeed} onChange={(e) => setGodOverride(prev => ({ ...prev, windSpeed: parseInt(e.target.value) }))} />
+                            )}
+
+                            {(weatherData || godOverride.active) && (
+                                <>
+
+
+                                    <div className="text-center space-y-2 animate-slide-up w-full">
+                                        <div className="flex justify-center mb-6">
+                                            <div className="flex items-center gap-3 px-6 py-2 rounded-full bg-white/5 border border-white/5 backdrop-blur-md hover:bg-white/10 transition-colors">
+                                                <MapPin size={12} className="text-white/50" />
+                                                <span className="text-[10px] uppercase tracking-[0.25em] font-bold text-white/70">{currentDisplay.city}, {currentDisplay.country}</span>
+                                            </div>
+                                        </div>
+                                        <div className="relative inline-block py-4">
+                                            <h1 className="text-[20vw] lg:text-[15rem] xl:text-[18rem] leading-[0.8] font-[100] tracking-tighter text-white mix-blend-overlay select-none">{Math.round(currentDisplay.temp)}°</h1>
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-white/5 blur-[100px] rounded-full -z-10 pointer-events-none"></div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-16 w-full max-w-5xl mx-auto relative z-20">
+                                            {[{ icon: Wind, value: currentDisplay.wind, unit: 'KM/H', label: 'Wind Velocity' }, { icon: Droplets, value: currentDisplay.humidity, unit: '%', label: 'Humidity' }, { icon: Gauge, value: Math.round(currentDisplay.pressure), unit: 'hPa', label: 'Pressure' }].map((stat, i) => (
+                                                <div key={i} className="flex flex-col items-center justify-center p-8 rounded-[2rem] transition-all duration-500 group w-full border border-transparent hover:bg-white/5 hover:backdrop-blur-md hover:border-white/5">
+                                                    <stat.icon size={28} className="text-white/30 mb-4 group-hover:text-white/80 transition-colors" />
+                                                    <span className="text-3xl font-light tracking-tight">{stat.value} <span className="text-xs opacity-40 font-bold ml-1">{stat.unit}</span></span>
+                                                    <span className="text-[9px] uppercase tracking-[0.2em] text-white/30 mt-2">{stat.label}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10 w-full mt-20 max-w-7xl mx-auto relative z-20">
+                                            <div className="w-full h-[350px] lg:h-[400px]">{currentDisplay.hourly && <ForecastGraph data={currentDisplay.hourly} />}</div>
+                                            <div className="w-full h-[350px] lg:h-[400px]">{(currentDisplay.lat && currentDisplay.lon) && <LocationMap lat={currentDisplay.lat} lon={currentDisplay.lon} />}</div>
+                                        </div>
                                     </div>
-                                    <div className="group">
-                                        <div className="flex justify-between text-[10px] font-bold text-white/30 uppercase tracking-widest mb-4 pl-1"><span>Temperature</span><span className="text-white group-hover:text-white/80 transition-colors">{godOverride.temperature}°</span></div>
-                                        <input type="range" min="-30" max="50" className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-white hover:accent-gray-200 transition-all" value={godOverride.temperature} onChange={(e) => setGodOverride(prev => ({ ...prev, temperature: parseInt(e.target.value) }))} />
-                                    </div>
-                                </div>
-                            </div>
+                                </>
+                            )}
                         </div>
+                        {error && <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-red-500/10 border border-red-500/20 text-red-200 px-8 py-4 rounded-2xl backdrop-blur-xl text-xs font-bold uppercase tracking-wider z-[100] shadow-2xl animate-in slide-in-from-bottom-4 fade-in">System Alert: {error}</div>}
                     </div>
-                )}
+                    <div className="p-8 text-center opacity-20 hover:opacity-50 transition-opacity text-[9px] tracking-[0.4em] uppercase font-bold cursor-default text-white">incx weather v1.0</div>
+
+                </div>
+                {mode === 'god' && renderGodMenu()}
             </div>
-        </div>
+        </ImprovementWrapper>
     );
 }
