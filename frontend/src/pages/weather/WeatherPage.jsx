@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Search, MapPin, Droplets, Zap, Activity, Volume2, VolumeX, X, Gauge, Map as MapIcon, ArrowRight, Settings2, Home, CloudFog } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useUX } from '../../context/UXContext';
+import ImprovementWrapper from '../../components/imp/ImprovementWrapper';
+
 
 // --- UTILS & CONFIG ---
 
@@ -57,7 +60,6 @@ const playThunderSound = () => {
     }
 };
 
-import { useUX } from '../../context/UXContext';
 
 // --- COMPONENTS ---
 
