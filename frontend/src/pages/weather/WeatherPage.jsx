@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Search, MapPin, Droplets, Zap, Activity, Volume2, VolumeX, X, Gauge, Map as MapIcon, ArrowRight, Settings2, Home, CloudFog } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useUX } from '../../context/UXContext';
-import ImprovementWrapper from '../../components/imp/ImprovementWrapper';
-
 
 // --- UTILS & CONFIG ---
 
@@ -60,6 +57,7 @@ const playThunderSound = () => {
     }
 };
 
+import ImprovementWrapper from '../../components/imp/ImprovementWrapper';
 
 // --- COMPONENTS ---
 
@@ -465,12 +463,6 @@ export default function App({ username }) {
     const [showSearch, setShowSearch] = useState(true);
     const navigate = useNavigate();
 
-    // Wire up UX Improvements
-    const { loadImprovementsForPage } = useUX();
-    useEffect(() => {
-        loadImprovementsForPage('WeatherPage');
-    }, [loadImprovementsForPage]);
-
     const [godOverride, setGodOverride] = useState({
         active: false,
         weatherCode: 0,
@@ -625,14 +617,15 @@ export default function App({ username }) {
             );
         }
 
+
+
         return (
-            <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl z-[100] p-4">
+            <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl z-30 p-4">
                 <div className="bg-black/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 shadow-2xl text-white ring-1 ring-white/5 relative overflow-hidden cursor-none">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
                     <div className="absolute top-6 right-8">
                         <button onClick={() => setIsGodMinimized(true)} className="text-white/30 hover:text-white transition-colors"><div className="w-6 h-1 bg-current rounded-full"></div></button>
                     </div>
-
                     <div className="flex items-center justify-between mb-12 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-5">
                             <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-inner"><Settings2 className="w-7 h-7 text-white/90" /></div>
@@ -643,24 +636,27 @@ export default function App({ username }) {
                             <span className={`text-[10px] font-bold uppercase tracking-wider ${godOverride.active ? 'text-white' : 'text-white/30'}`}>Active</span>
                         </div>
                     </div>
-
-                    <div id="mode-switcher" className="relative flex bg-black/40 backdrop-blur-xl rounded-full p-1.5 border border-white/10 shadow-2xl mb-8">
-                        {['normal', 'dev', 'god'].map((m) => (
-                            <button key={m} onClick={() => setMode(m)} className={`relative px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${mode === m ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>{m}</button>
-                        ))}
-                    </div>
-
                     <div className={`space-y-12 transition-all duration-500 ${godOverride.active ? 'opacity-100' : 'opacity-20 pointer-events-none grayscale'}`}>
                         <div>
                             <label className="block text-[10px] font-bold text-white/30 uppercase tracking-widest mb-5 pl-1">Atmospheric Condition</label>
                             <div className="grid grid-cols-7 gap-3">
-                                <button onClick={() => setGodOverride(prev => ({ ...prev, weatherCode: 0 }))} className={`aspect-square rounded-2xl flex items-center justify-center transition-all duration-300 border ${godOverride.weatherCode === 0 ? 'bg-white text-black border-white scale-105' : 'bg-white/5 border-transparent hover:bg-white/10'}`}><Sun size={22} /></button>
-                                <button onClick={() => setGodOverride(prev => ({ ...prev, weatherCode: 1 }))} className={`aspect-square rounded-2xl flex items-center justify-center transition-all duration-300 border ${godOverride.weatherCode === 1 ? 'bg-white text-black border-white scale-105' : 'bg-white/5 border-transparent hover:bg-white/10'}`}><Cloud size={22} /></button>
-                                <button onClick={() => setGodOverride(prev => ({ ...prev, weatherCode: 45 }))} className={`aspect-square rounded-2xl flex items-center justify-center transition-all duration-300 border ${godOverride.weatherCode === 45 ? 'bg-white text-black border-white scale-105' : 'bg-white/5 border-transparent hover:bg-white/10'}`}><CloudFog size={22} /></button>
-                                <button onClick={() => setGodOverride(prev => ({ ...prev, weatherCode: 61 }))} className={`aspect-square rounded-2xl flex items-center justify-center transition-all duration-300 border ${godOverride.weatherCode === 61 ? 'bg-white text-black border-white scale-105' : 'bg-white/5 border-transparent hover:bg-white/10'}`}><CloudRain size={22} /></button>
-                                <button onClick={() => setGodOverride(prev => ({ ...prev, weatherCode: 71 }))} className={`aspect-square rounded-2xl flex items-center justify-center transition-all duration-300 border ${godOverride.weatherCode === 71 ? 'bg-white text-black border-white scale-105' : 'bg-white/5 border-transparent hover:bg-white/10'}`}><CloudSnow size={22} /></button>
-                                <button onClick={() => setGodOverride(prev => ({ ...prev, weatherCode: 95 }))} className={`aspect-square rounded-2xl flex items-center justify-center transition-all duration-300 border ${godOverride.weatherCode === 95 ? 'bg-white text-black border-white scale-105' : 'bg-white/5 border-transparent hover:bg-white/10'}`}><CloudLightning size={22} /></button>
-                                <button onClick={() => setGodOverride(prev => ({ ...prev, windSpeed: 100 }))} className={`aspect-square rounded-2xl flex items-center justify-center transition-all duration-300 border ${godOverride.windSpeed >= 100 ? 'bg-white text-black border-white scale-105' : 'bg-white/5 border-transparent hover:bg-white/10'}`}><Wind size={22} /></button>
+                                <button onClick={() => setGodOverride(prev => ({ ...prev, weatherCode: 0, windSpeed: 10, temperature: 25 }))} className={`aspect-square rounded-2xl flex items-center justify-center transition-all duration-300 border ${godOverride.weatherCode === 0 && godOverride.windSpeed < 50 ? 'bg-white text-black border-white scale-105' : 'bg-white/5 border-transparent hover:bg-white/10'}`}><Sun size={22} /></button>
+                                <button onClick={() => setGodOverride(prev => ({ ...prev, weatherCode: 1, windSpeed: 10, temperature: 18 }))} className={`aspect-square rounded-2xl flex items-center justify-center transition-all duration-300 border ${godOverride.weatherCode === 1 && godOverride.windSpeed < 50 ? 'bg-white text-black border-white scale-105' : 'bg-white/5 border-transparent hover:bg-white/10'}`}><Cloud size={22} /></button>
+                                <button onClick={() => setGodOverride(prev => ({ ...prev, weatherCode: 45, windSpeed: 10, temperature: 10 }))} className={`aspect-square rounded-2xl flex items-center justify-center transition-all duration-300 border ${godOverride.weatherCode === 45 && godOverride.windSpeed < 50 ? 'bg-white text-black border-white scale-105' : 'bg-white/5 border-transparent hover:bg-white/10'}`}><CloudFog size={22} /></button>
+                                <button onClick={() => setGodOverride(prev => ({ ...prev, weatherCode: 61, windSpeed: 10, temperature: 15 }))} className={`aspect-square rounded-2xl flex items-center justify-center transition-all duration-300 border ${godOverride.weatherCode === 61 && godOverride.windSpeed < 50 ? 'bg-white text-black border-white scale-105' : 'bg-white/5 border-transparent hover:bg-white/10'}`}><CloudRain size={22} /></button>
+                                <button onClick={() => setGodOverride(prev => ({ ...prev, weatherCode: 71, windSpeed: 10, temperature: -5 }))} className={`aspect-square rounded-2xl flex items-center justify-center transition-all duration-300 border ${godOverride.weatherCode === 71 && godOverride.windSpeed < 50 ? 'bg-white text-black border-white scale-105' : 'bg-white/5 border-transparent hover:bg-white/10'}`}><CloudSnow size={22} /></button>
+                                <button onClick={() => setGodOverride(prev => ({ ...prev, weatherCode: 95, windSpeed: 25, temperature: 18 }))} className={`aspect-square rounded-2xl flex items-center justify-center transition-all duration-300 border ${godOverride.weatherCode === 95 && godOverride.windSpeed < 50 ? 'bg-white text-black border-white scale-105' : 'bg-white/5 border-transparent hover:bg-white/10'}`}><CloudLightning size={22} /></button>
+                                <button onClick={() => setGodOverride(prev => ({ ...prev, windSpeed: 100, weatherCode: 0, temperature: 15 }))} className={`aspect-square rounded-2xl flex items-center justify-center transition-all duration-300 border ${godOverride.windSpeed >= 50 ? 'bg-white text-black border-white scale-105' : 'bg-white/5 border-transparent hover:bg-white/10'}`}><Wind size={22} /></button>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-10">
+                            <div className="group">
+                                <div className="flex justify-between text-[10px] font-bold text-white/30 uppercase tracking-widest mb-4 pl-1"><span>Wind Velocity</span><span className="text-white group-hover:text-white/80 transition-colors">{godOverride.windSpeed} km/h</span></div>
+                                <input type="range" min="0" max="120" className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-white hover:accent-gray-200 transition-all" value={godOverride.windSpeed} onChange={(e) => setGodOverride(prev => ({ ...prev, windSpeed: parseInt(e.target.value) }))} />
+                            </div>
+                            <div className="group">
+                                <div className="flex justify-between text-[10px] font-bold text-white/30 uppercase tracking-widest mb-4 pl-1"><span>Temperature</span><span className="text-white group-hover:text-white/80 transition-colors">{godOverride.temperature}°</span></div>
+                                <input type="range" min="-30" max="50" className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-white hover:accent-gray-200 transition-all" value={godOverride.temperature} onChange={(e) => setGodOverride(prev => ({ ...prev, temperature: parseInt(e.target.value) }))} />
                             </div>
                         </div>
                     </div>
@@ -708,15 +704,24 @@ export default function App({ username }) {
                                 ))}
                             </div>
 
+                            {/* CENTER SEARCH */}
                             {(weatherData || godOverride.active) && (
-                                <>
-                                    <div id="search-overlay" className={`w-full max-w-lg transition-all duration-700 ease-in-out origin-top z-50 ${showSearch ? 'opacity-100 scale-100 translate-y-0 mb-8' : 'opacity-0 scale-90 -translate-y-10 absolute pointer-events-none h-0 mb-0'}`}>
-                                        <div className="relative group">
-                                            <input type="text" className="relative w-full bg-black/40 border border-white/10 text-white placeholder-white/20 rounded-2xl py-4 pl-6 pr-14 backdrop-blur-xl shadow-lg focus:outline-none focus:bg-black/60 transition-all text-lg font-light" placeholder="Change location..." value={location} onChange={(e) => setLocation(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} />
-                                            <button onClick={handleSearch} className="absolute inset-y-2 right-2 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 text-white/50 hover:text-white transition-colors"><Search size={16} /></button>
-                                        </div>
-                                    </div>
-                                </>
+                                <div className="flex bg-black/40 backdrop-blur-xl rounded-full p-1.5 border border-white/10 shadow-2xl relative">
+                                    <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="relative flex items-center w-full">
+                                        <input
+                                            type="text"
+                                            value={location}
+                                            onChange={(e) => setLocation(e.target.value)}
+                                            placeholder="SEARCH CITY..."
+                                            autoComplete="off"
+                                            className="w-56 bg-transparent border-none px-6 py-2 text-[10px] font-bold uppercase tracking-widest text-white placeholder-white/30 focus:outline-none focus:ring-0 focus:border-none focus-visible:outline-none focus-visible:ring-0 text-center appearance-none"
+                                            style={{ backgroundColor: 'transparent', boxShadow: 'none', border: 'none' }}
+                                        />
+                                        <button type="submit" className="absolute right-3 p-1 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors">
+                                            <Search size={12} />
+                                        </button>
+                                    </form>
+                                </div>
                             )}
                         </div>
 
@@ -736,36 +741,53 @@ export default function App({ username }) {
                                         </div>
                                         <p className="text-white/30 uppercase tracking-[0.6em] text-[10px] md:text-xs font-medium">Inconvenient Weather App</p>
                                     </div>
-                                    <div id="main-temp" className="relative inline-block py-4">
-                                        <h1 className="text-[20vw] lg:text-[15rem] xl:text-[18rem] leading-[0.8] font-[100] tracking-tighter text-white mix-blend-overlay select-none">{Math.round(currentDisplay.temp)}°</h1>
-                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-white/5 blur-[100px] rounded-full -z-10 pointer-events-none"></div>
-                                    </div>
-                                    <div id="stats-grid" className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-16 w-full max-w-5xl mx-auto relative z-20">
-                                        {[{ icon: Wind, value: currentDisplay.wind, unit: 'KM/H', label: 'Wind Velocity' }, { icon: Droplets, value: currentDisplay.humidity, unit: '%', label: 'Humidity' }, { icon: Gauge, value: Math.round(currentDisplay.pressure), unit: 'hPa', label: 'Pressure' }].map((stat, i) => (
-                                            <div key={i} className="flex flex-col items-center justify-center p-8 rounded-[2rem] transition-all duration-500 group w-full border border-transparent hover:bg-white/5 hover:backdrop-blur-md hover:border-white/5">
-                                                <stat.icon size={28} className="text-white/30 mb-4 group-hover:text-white/80 transition-colors" />
-                                                <span className="text-3xl font-light tracking-tight">{stat.value} <span className="text-xs opacity-40 font-bold ml-1">{stat.unit}</span></span>
-                                                <span className="text-[9px] uppercase tracking-[0.2em] text-white/30 mt-2">{stat.label}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10 w-full mt-20 max-w-7xl mx-auto relative z-20">
-                                        <div id="forecast-graph" className="w-full h-[350px] lg:h-[400px]">{currentDisplay.hourly && <ForecastGraph data={currentDisplay.hourly} />}</div>
-                                        <div id="location-map" className="w-full h-[350px] lg:h-[400px]">{(currentDisplay.lat && currentDisplay.lon) && <LocationMap lat={currentDisplay.lat} lon={currentDisplay.lon} />}</div>
+                                    <div className="w-full max-w-xl relative group">
+                                        <div className="absolute -inset-[1px] bg-gradient-to-r from-white/10 via-white/20 to-white/10 rounded-[24px] opacity-0 group-hover:opacity-100 blur-lg transition-opacity duration-700"></div>
+                                        <input type="text" className="relative w-full bg-black/60 border border-white/10 text-white placeholder-white/20 rounded-[24px] py-8 pl-10 pr-24 backdrop-blur-2xl shadow-2xl focus:outline-none focus:bg-black/80 focus:border-white/20 transition-all text-2xl font-light tracking-wide" placeholder="Enter location..." value={location} onChange={(e) => setLocation(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} autoFocus />
+                                        <button onClick={handleSearch} className="absolute inset-y-3 right-3 w-16 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10 text-white transition-all duration-300 border border-white/5"><ArrowRight size={24} className="text-white/80" /></button>
                                     </div>
                                 </div>
+                            )}
 
+                            {(weatherData || godOverride.active) && (
+                                <>
+
+
+                                    <div className="text-center space-y-2 animate-slide-up w-full">
+                                        <div className="flex justify-center mb-6">
+                                            <div className="flex items-center gap-3 px-6 py-2 rounded-full bg-white/5 border border-white/5 backdrop-blur-md hover:bg-white/10 transition-colors">
+                                                <MapPin size={12} className="text-white/50" />
+                                                <span className="text-[10px] uppercase tracking-[0.25em] font-bold text-white/70">{currentDisplay.city}, {currentDisplay.country}</span>
+                                            </div>
+                                        </div>
+                                        <div className="relative inline-block py-4">
+                                            <h1 className="text-[20vw] lg:text-[15rem] xl:text-[18rem] leading-[0.8] font-[100] tracking-tighter text-white mix-blend-overlay select-none">{Math.round(currentDisplay.temp)}°</h1>
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-white/5 blur-[100px] rounded-full -z-10 pointer-events-none"></div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-16 w-full max-w-5xl mx-auto relative z-20">
+                                            {[{ icon: Wind, value: currentDisplay.wind, unit: 'KM/H', label: 'Wind Velocity' }, { icon: Droplets, value: currentDisplay.humidity, unit: '%', label: 'Humidity' }, { icon: Gauge, value: Math.round(currentDisplay.pressure), unit: 'hPa', label: 'Pressure' }].map((stat, i) => (
+                                                <div key={i} className="flex flex-col items-center justify-center p-8 rounded-[2rem] transition-all duration-500 group w-full border border-transparent hover:bg-white/5 hover:backdrop-blur-md hover:border-white/5">
+                                                    <stat.icon size={28} className="text-white/30 mb-4 group-hover:text-white/80 transition-colors" />
+                                                    <span className="text-3xl font-light tracking-tight">{stat.value} <span className="text-xs opacity-40 font-bold ml-1">{stat.unit}</span></span>
+                                                    <span className="text-[9px] uppercase tracking-[0.2em] text-white/30 mt-2">{stat.label}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10 w-full mt-20 max-w-7xl mx-auto relative z-20">
+                                            <div className="w-full h-[350px] lg:h-[400px]">{currentDisplay.hourly && <ForecastGraph data={currentDisplay.hourly} />}</div>
+                                            <div className="w-full h-[350px] lg:h-[400px]">{(currentDisplay.lat && currentDisplay.lon) && <LocationMap lat={currentDisplay.lat} lon={currentDisplay.lon} />}</div>
+                                        </div>
+                                    </div>
+                                </>
                             )}
                         </div>
                         {error && <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-red-500/10 border border-red-500/20 text-red-200 px-8 py-4 rounded-2xl backdrop-blur-xl text-xs font-bold uppercase tracking-wider z-[100] shadow-2xl animate-in slide-in-from-bottom-4 fade-in">System Alert: {error}</div>}
                     </div>
                     <div className="p-8 text-center opacity-20 hover:opacity-50 transition-opacity text-[9px] tracking-[0.4em] uppercase font-bold cursor-default text-white">incx weather v1.0</div>
 
-
-
                 </div>
                 {mode === 'god' && renderGodMenu()}
             </div>
-        </ImprovementWrapper >
+        </ImprovementWrapper>
     );
 }
