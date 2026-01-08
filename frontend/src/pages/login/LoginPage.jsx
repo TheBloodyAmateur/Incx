@@ -8,11 +8,11 @@ import ImprovementWrapper from '../../components/imp/ImprovementWrapper';
 import { useUX } from '../../context/UXContext';
 
 export default function LoginPage() {
-      const { loadImprovementsForPage } = useUX();
-    
-      useEffect(() => {
+    const { loadImprovementsForPage } = useUX();
+
+    useEffect(() => {
         loadImprovementsForPage('LoginPage');
-      }, []); 
+    }, []);
     const [devMode, setDevMode] = useState(false);
     const [password, setPassword] = useState("");
     const [username, setUsername] = useState("");
@@ -45,50 +45,55 @@ export default function LoginPage() {
         }
     };
 
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        handleAuth();
+    };
+
     return (
         <ImprovementWrapper>
-        <div className="login-wrapper">
-            <LetterGlitch
-                glitchColors={["#3A2F66", "#2E4A7F", "#0F6A77"]}
-                glitchSpeed={50}
-                outerVignette={true}
-                centerVignette={false}
-            />
-            <div className="logo-fixed">
-                <img src={logo} alt="incx" />
-            </div>
-            <div className="nav-wrapper">
-                <SimpleNav
-                    devMode={devMode}
-                    onDevModeToggle={setDevMode}
+            <div className="login-wrapper">
+                <LetterGlitch
+                    glitchColors={["#3A2F66", "#2E4A7F", "#0F6A77"]}
+                    glitchSpeed={50}
+                    outerVignette={true}
+                    centerVignette={false}
                 />
+                <div className="logo-fixed">
+                    <img src={logo} alt="incx" />
+                </div>
+                <div className="nav-wrapper">
+                    <SimpleNav
+                        devMode={devMode}
+                        onDevModeToggle={setDevMode}
+                    />
+                </div>
+                <form className="login-box" onSubmit={handleSubmit}>
+                    <h1>{isLogin ? (devMode ? "Login (DEV)" : "Login") : "Register"}</h1>
+                    {error && <p name="error-message" className="error-message">{error}</p>}
+                    <label>Username</label>
+                    <input
+                        type={devMode ? "text" : "password"}
+                        value={devMode ? username : password}
+                        onChange={(e) => devMode ? setUsername(e.target.value) : setPassword(e.target.value)}
+                        placeholder={devMode ? "Username" : "Password"}
+                    />
+                    <label>Password</label>
+                    <input
+                        type={devMode ? "password" : "text"}
+                        value={devMode ? password : username}
+                        onChange={(e) => devMode ? setPassword(e.target.value) : setUsername(e.target.value)}
+                        placeholder={devMode ? "Password" : "Username"}
+                    />
+                    <button type="submit">{isLogin ? "Sign In" : "Register"}</button>
+                    <p onClick={() => setIsLogin(!isLogin)} className="toggle-auth">
+                        {isLogin ? "Need an account? Register" : "Already have an account? Login"}
+                    </p>
+                    <a href="/forgot" className="forgot-link">
+                        Forgot Password?
+                    </a>
+                </form>
             </div>
-            <div className="login-box">
-                <h1>{isLogin ? (devMode ? "Login (DEV)" : "Login") : "Register"}</h1>
-                {error && <p name="error-message" className="error-message">{error}</p>}
-                <label>Username</label>
-                <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Username"
-                />
-                <label>Password</label>
-                <input
-                    type={devMode ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={devMode ? "Password" : "•••••••"}
-                />
-                <button onClick={handleAuth}>{isLogin ? "Sign In" : "Register"}</button>
-                <p onClick={() => setIsLogin(!isLogin)} className="toggle-auth">
-                    {isLogin ? "Need an account? Register" : "Already have an account? Login"}
-                </p>
-                <a href="/forgot" className="forgot-link">
-                    Forgot Password?
-                </a>
-            </div>
-        </div>
         </ImprovementWrapper>
     );
 }
