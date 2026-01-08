@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ImprovementWrapper from '../../components/imp/ImprovementWrapper';
 import { useUX } from '../../context/UXContext'; 
+import { BookingService } from '../../services/BookingService'; 
 import "./BookingPage.css";
 
 
@@ -8,15 +9,24 @@ const MONTH_NAMES = [ "JANUAR", "FEBRUAR", "MÄRZ", "APRIL", "MAI", "JUNI", "JUL
 const AUSTRIA_CITIES = [ { name: "Wien", zip: "1010" }, { name: "Graz", zip: "8010" }, { name: "Linz", zip: "4020" }, { name: "Salzburg", zip: "5020" }, { name: "Innsbruck", zip: "6020" }, { name: "Klagenfurt", zip: "9020" }, { name: "Villach", zip: "9500" }, { name: "Wels", zip: "4600" }, { name: "St. Pölten", zip: "3100" }, { name: "Dornbirn", zip: "6850" } ];
 const getDaysInMonth = (month, year) => new Date(year, month, 0).getDate();
 const getFirstDayOfMonth = (month, year) => { let day = new Date(year, month - 1, 1).getDay(); return day === 0 ? 6 : day - 1; };
-const saveBooking = (dateStr) => { const existing = JSON.parse(sessionStorage.getItem('incx_bookings') || '[]'); existing.push(dateStr); sessionStorage.setItem('incx_bookings', JSON.stringify(existing)); };
-const getBookings = () => JSON.parse(sessionStorage.getItem('incx_bookings') || '[]');
 
 export default function BookingPage() {
   const { loadImprovementsForPage } = useUX();
 
   useEffect(() => {
     loadImprovementsForPage('BookingPage');
+    loadBookings();
   }, []); 
+
+  const loadBookings = async () => {
+    try {
+      const bookings = await BookingService.getMyBookings();
+      const dateStrings = bookings.map(b => b.bookingDate); 
+      setBookedDates(dateStrings);
+    } catch (e) {
+      console.error("Konnte Buchungen nicht laden", e);
+    }
+  };
 
   const [dateFormat, setDateFormat] = useState("DE"); 
   const [currentDateString, setCurrentDateString] = useState("");
@@ -25,7 +35,10 @@ export default function BookingPage() {
   const today = new Date();
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth() + 1;
-  const initialFormState = { salutation: 1, firstName: "", lastName: "", email: "", day: 1, month: "", year: 2000, zip: "", city: "" };
+  const [calendarMonth, setCalendarMonth] = useState(currentMonth);
+  const [calendarYear, setCalendarYear] = useState(currentYear);
+
+  const initialFormState = { salutation: 1, firstName: "", lastName: "", email: "", day: 1, month: "", year: 2020, zip: "", city: "" };
   const [formData, setFormData] = useState(initialFormState);
   const [monthSuggestions, setMonthSuggestions] = useState([]);
   const [citySuggestions, setCitySuggestions] = useState([]); 
@@ -34,6 +47,21 @@ export default function BookingPage() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const SCROLL_THRESHOLD = 20;
   const yearScrollRef = useRef(null);
+
+  const changeCalendarMonth = (offset) => {
+    let newMonth = calendarMonth + offset;
+    let newYear = calendarYear;
+
+    if (newMonth > 12) {
+      newMonth = 1;
+      newYear++;
+    } else if (newMonth < 1) {
+      newMonth = 12;
+      newYear--;
+    }
+    setCalendarMonth(newMonth);
+    setCalendarYear(newYear);
+  };
 
   useEffect(() => {
     const formats = [ { code: "DE", label: "DD.MM.YYYY" }, { code: "US", label: "MM/DD/YYYY" }, { code: "ISO", label: "YYYY-MM-DD" } ];
@@ -44,7 +72,7 @@ export default function BookingPage() {
     const y = today.getFullYear();
     let dateStr = selected.code === "DE" ? `${d}.${m}.${y}` : selected.code === "US" ? `${m}/${d}/${y}` : `${y}-${m}-${d}`;
     setCurrentDateString(dateStr);
-    setBookedDates(getBookings());
+    
     const controlNames = [ "salutation", "firstName", "lastName", "zip", "city", "email", "day", "month", "year", "submit" ];
     controlNames.sort();
     const indices = {};
@@ -80,7 +108,7 @@ export default function BookingPage() {
   const handleEmailKeyDown = (e) => { if (e.key.length > 1) return; const hasAt = formData.email.includes('@'); if (!hasAt && e.key !== '@') e.preventDefault(); };
   const adjustDay = (delta) => { setFormData(prev => { let newDay = parseInt(prev.day) + delta; if (newDay < 1) newDay = 1; if (newDay > 31) newDay = 31; return { ...prev, day: newDay }; }); };
   const handleMonthSuggestionClick = (e) => e.preventDefault();
-  const handleYearScroll = (e) => {
+    const handleYearScroll = (e) => {
       e.preventDefault();
       const delta = e.deltaY > 0 ? -1 : 1; 
       setScrollProgress(prev => {
@@ -102,23 +130,48 @@ export default function BookingPage() {
     if (!formData.year) newErrors.year = "Jahr fehlt.";
     return newErrors;
   };
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validate();
     setErrors(validationErrors);
     setIsSubmitted(true);
+
     if (Object.keys(validationErrors).length === 0) {
       const monthIndex = MONTH_NAMES.indexOf(formData.month.toUpperCase()) + 1;
       const mStr = String(monthIndex).padStart(2, '0');
       const dStr = String(formData.day).padStart(2, '0');
       const bookingIso = `${formData.year}-${mStr}-${dStr}`;
-      saveBooking(bookingIso);
-      setBookedDates(getBookings());
-      alert(`Termin gebucht für: ${bookingIso} in ${formData.zip} ${formData.city}`);
-    } else { alert("Fehlerhafte Eingaben. Bitte prüfen."); }
-    setFormData(initialFormState);
-    setMonthSuggestions([]); setCitySuggestions([]); setScrollProgress(0);
+
+      const bookingPayload = {
+          salutation: formData.salutation,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          zip: formData.zip,
+          city: formData.city,
+          bookingDate: bookingIso 
+      };
+      setFormData(initialFormState);
+      try {
+          await BookingService.createBooking(bookingPayload);
+          alert(`Termin erfolgreich gebucht für: ${bookingIso}`);
+          loadBookings();
+          
+          
+          setMonthSuggestions([]);
+          setCitySuggestions([]);
+          setScrollProgress(0);
+          setIsSubmitted(false);
+
+      } catch (error) {
+          alert(error.message); 
+      }
+    } else {
+      alert("Fehlerhafte Eingaben. Bitte prüfen.");
+    }
   };
+
   const enableInput = (e) => e.target.removeAttribute('readonly');
 
   const renderDayInput = () => (
@@ -145,15 +198,15 @@ export default function BookingPage() {
       const progressPercent = (Math.abs(scrollProgress) / SCROLL_THRESHOLD) * 100;
       const barColor = scrollProgress > 0 ? '#4caf50' : '#f44336'; 
       return (
-        <div className="date-control-wrapper" key="year">
-          <label tabIndex={tabIndices['year']} className="focusable-label">Jahr (Scrollen)</label>
-          <div className="year-scroll-container" ref={yearScrollRef} title="Mausrad benutzen zum Ändern (+/- 20 Ticks)" tabIndex={tabIndices['year']}>
-              <div className="year-display">{formData.year}</div>
+    <div className="date-control-wrapper" key="year">
+      <label tabIndex={tabIndices['year']} className="focusable-label">Jahr (Scrollen)</label>
+      <div className="year-scroll-container" ref={yearScrollRef} title="Mausrad benutzen zum Ändern (+/- 20 Ticks)" tabIndex={tabIndices['year']}>
+          <div className="year-display">{formData.year}</div>
               <div className="scroll-bar-container"><div className="scroll-bar-fill" style={{ width: `${progressPercent}%`, backgroundColor: barColor, marginLeft: scrollProgress < 0 ? 'auto' : '0' }} /></div>
-          </div>
-          {isSubmitted && errors.year && <div className="err-msg">{errors.year}</div>}
-        </div>
-      );
+      </div>
+      {isSubmitted && errors.year && <div className="err-msg">{errors.year}</div>}
+    </div>
+  );
   };
 
   const getDateInputs = () => {
@@ -165,20 +218,30 @@ export default function BookingPage() {
   };
 
   const renderCalendar = () => {
-    const daysInMonth = getDaysInMonth(currentMonth, currentYear);
-    const startDay = getFirstDayOfMonth(currentMonth, currentYear); 
+    const daysInMonth = getDaysInMonth(calendarMonth, calendarYear);
+    const startDay = getFirstDayOfMonth(calendarMonth, calendarYear); 
     const weeks = []; let dayCount = 1;
     for (let i = 0; i < 6; i++) {
       const week = [];
       for (let j = 0; j < 7; j++) {
         if ((i === 0 && j < startDay) || dayCount > daysInMonth) week.push(null); 
-        else { week.push({ day: dayCount, isToday: dayCount === today.getDate(), isBooked: bookedDates.includes(`${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(dayCount).padStart(2,'0')}`) }); dayCount++; }
+        else { 
+            const checkIso = `${calendarYear}-${String(calendarMonth).padStart(2,'0')}-${String(dayCount).padStart(2,'0')}`;
+            const isBooked = bookedDates.includes(checkIso);
+            const isToday = dayCount === today.getDate() && calendarMonth === (today.getMonth() + 1) && calendarYear === today.getFullYear();
+            week.push({ day: dayCount, isToday, isBooked }); 
+            dayCount++; 
+        }
       }
       weeks.push(week); if (dayCount > daysInMonth) break;
     }
     return (
       <div className="mini-calendar">
-        <div className="cal-header">{MONTH_NAMES[currentMonth-1]} {currentYear}</div>
+        <div className="cal-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+            <button type="button" onClick={() => changeCalendarMonth(-1)} style={{background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem'}}>&lt;</button>
+            <span>{MONTH_NAMES[calendarMonth-1]} {calendarYear}</span>
+            <button type="button" onClick={() => changeCalendarMonth(1)} style={{background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem'}}>&gt;</button>
+        </div>
         <div className="cal-grid-header"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
         <div className="cal-body">
           {weeks.map((week, wIdx) => (<div key={wIdx} className="cal-row">{week.map((cell, dIdx) => (<div key={dIdx} className={`cal-cell ${cell?.isToday?'today':''} ${cell?.isBooked?'booked':''}`}>{cell?cell.day:''}</div>))}</div>))}
@@ -234,7 +297,7 @@ export default function BookingPage() {
                           <input type="number" name="zip" value={formData.zip} onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off" className={isSubmitted && errors.zip ? "error-border" : ""} tabIndex={tabIndices['zip']} />
                           {isSubmitted && errors.zip && <div className="err-msg">{errors.zip}</div>}
                       </div>
-                      <div className="relative">
+                      <div className="relative"> 
                           <label tabIndex={tabIndices['city']} className="focusable-label">Ort  </label>
                           <input type="text" name="city" value={formData.city} onChange={handleChange} onFocus={enableInput} readOnly autoComplete="off" className={isSubmitted && errors.city ? "error-border" : ""} tabIndex={tabIndices['city']} />
                           {citySuggestions.length > 0 && (<ul className="city-suggestions-list">{citySuggestions.map(c => (<li key={c.zip} onClick={() => selectCity(c.name)}>{c.name} ({c.zip})</li>))}</ul>)}
