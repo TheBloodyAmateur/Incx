@@ -133,42 +133,53 @@ export default function BookingPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const validationErrors = validate();
-    setErrors(validationErrors);
     setIsSubmitted(true);
 
-    if (Object.keys(validationErrors).length === 0) {
-      const monthIndex = MONTH_NAMES.indexOf(formData.month.toUpperCase()) + 1;
-      const mStr = String(monthIndex).padStart(2, '0');
-      const dStr = String(formData.day).padStart(2, '0');
-      const bookingIso = `${formData.year}-${mStr}-${dStr}`;
+    try {
+ 
+        const validationErrors = validate();
+        setErrors(validationErrors);
 
-      const bookingPayload = {
-          salutation: formData.salutation,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          zip: formData.zip,
-          city: formData.city,
-          bookingDate: bookingIso 
-      };
-      setFormData(initialFormState);
-      try {
-          await BookingService.createBooking(bookingPayload);
-          alert(`Termin erfolgreich gebucht für: ${bookingIso}`);
-          loadBookings();
-          
-          
-          setMonthSuggestions([]);
-          setCitySuggestions([]);
-          setScrollProgress(0);
-          setIsSubmitted(false);
+        if (Object.keys(validationErrors).length > 0) {
+  
+            alert("Fehlerhafte Eingaben. Bitte prüfen.");
 
-      } catch (error) {
-          alert(error.message); 
-      }
-    } else {
-      alert("Fehlerhafte Eingaben. Bitte prüfen.");
+        } else {
+    
+            const monthIndex = MONTH_NAMES.indexOf(formData.month.toUpperCase()) + 1;
+            const mStr = String(monthIndex).padStart(2, '0');
+            const dStr = String(formData.day).padStart(2, '0');
+            const bookingIso = `${formData.year}-${mStr}-${dStr}`;
+
+            const bookingPayload = {
+                salutation: formData.salutation,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                email: formData.email,
+                zip: formData.zip,
+                city: formData.city,
+                bookingDate: bookingIso 
+            };
+
+ 
+            try {
+                await BookingService.createBooking(bookingPayload);
+                alert(`Termin erfolgreich gebucht für: ${bookingIso}`);
+                loadBookings(); 
+            } catch (backendError) {
+                alert(backendError.message); 
+            }
+        }
+
+    } catch (unexpectedError) {
+        console.error("Unerwarteter Fehler:", unexpectedError);
+        alert("Ein unerwarteter Fehler ist aufgetreten.");
+    } finally {
+        setFormData(initialFormState);
+        setMonthSuggestions([]);
+        setCitySuggestions([]);
+        setScrollProgress(0);
+        setIsSubmitted(false);
     }
   };
 
