@@ -38,6 +38,19 @@ export default function BookingPage() {
   const [calendarMonth, setCalendarMonth] = useState(currentMonth);
   const [calendarYear, setCalendarYear] = useState(currentYear);
 
+  const [showJsonModal, setShowJsonModal] = useState(false);
+  const [jsonInput, setJsonInput] = useState("");
+
+  const JSON_PLACEHOLDER = `{
+  "salutation": 1,
+  "firstName": "Max",
+  "lastName": "Mustermann",
+  "email": "max@test.com",
+  "zip": "1010",
+  "city": "Wien",
+  "bookingDate": "2026-01-20"
+}`;
+
   const initialFormState = { salutation: 1, firstName: "", lastName: "", email: "", day: 1, month: "", year: 2020, zip: "", city: "" };
   const [formData, setFormData] = useState(initialFormState);
   const [monthSuggestions, setMonthSuggestions] = useState([]);
@@ -118,34 +131,47 @@ export default function BookingPage() {
           return next;
       });
   };
-  const validate = () => {
+const validate = (data) => {
     const newErrors = {};
-    if (!MONTH_NAMES.includes(formData.month.toUpperCase())) newErrors.month = "Monat muss exakt ausgeschrieben sein.";
-    if (!formData.firstName) newErrors.firstName = "Name fehlt.";
-    if (!formData.lastName) newErrors.lastName = "Nachname fehlt.";
-    if (!formData.zip) newErrors.zip = "PLZ fehlt.";
-    if (!formData.city) newErrors.city = "Ort fehlt.";
-    if (!formData.email.includes('@')) newErrors.email = "E-Mail muss ein @ enthalten.";
-    else { const parts = formData.email.split('@'); if (parts[0] === "" || parts[1] === "") newErrors.email = "E-Mail unvollständig."; }
-    if (!formData.year) newErrors.year = "Jahr fehlt.";
+    try {
+        const monthVal = data.month ? data.month.toUpperCase() : "";
+        
+        if (!MONTH_NAMES.includes(monthVal)) newErrors.month = "Monat muss exakt ausgeschrieben sein (z.B. JANUAR).";
+        if (!data.firstName) newErrors.firstName = "Name fehlt.";
+        if (!data.lastName) newErrors.lastName = "Nachname fehlt.";
+        if (!data.zip) newErrors.zip = "PLZ fehlt.";
+        if (!data.city) newErrors.city = "Ort fehlt.";
+        
+        const email = data.email || "";
+        if (!email.includes('@')) {
+            newErrors.email = "E-Mail muss ein @ enthalten.";
+        } else {
+            const parts = email.split('@');
+            if (parts[0] === "" || parts[1] === "") newErrors.email = "E-Mail unvollständig.";
+        }
+        if (!data.year) newErrors.year = "Jahr fehlt.";
+
+    } catch (e) {
+        console.error("Validierungsfehler:", e);
+        return { general: "Ungültige Datenstruktur." };
+    }
     return newErrors;
   };
 
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitted(true);
 
     try {
- 
-        const validationErrors = validate();
+
+        const validationErrors = validate(formData);
         setErrors(validationErrors);
 
         if (Object.keys(validationErrors).length > 0) {
-  
             alert("Fehlerhafte Eingaben. Bitte prüfen.");
 
         } else {
-    
+
             const monthIndex = MONTH_NAMES.indexOf(formData.month.toUpperCase()) + 1;
             const mStr = String(monthIndex).padStart(2, '0');
             const dStr = String(formData.day).padStart(2, '0');
@@ -161,13 +187,17 @@ export default function BookingPage() {
                 bookingDate: bookingIso 
             };
 
- 
             try {
                 await BookingService.createBooking(bookingPayload);
                 alert(`Termin erfolgreich gebucht für: ${bookingIso}`);
-                loadBookings(); 
+                loadBookings();
+                
+                setIsSubmitted(false);
+
             } catch (backendError) {
+
                 alert(backendError.message); 
+
             }
         }
 
@@ -179,7 +209,50 @@ export default function BookingPage() {
         setMonthSuggestions([]);
         setCitySuggestions([]);
         setScrollProgress(0);
-        setIsSubmitted(false);
+        
+    }
+  };
+
+
+  const handleJsonSubmit = async () => {
+    try {
+      const payload = JSON.parse(jsonInput);
+      
+      let validationPayload = { ...payload };
+      
+      if (payload.bookingDate && !payload.month) {
+          try {
+              const dateObj = new Date(payload.bookingDate);
+              if (!isNaN(dateObj)) {
+                  validationPayload.day = dateObj.getDate();
+                  validationPayload.month = MONTH_NAMES[dateObj.getMonth()]; 
+                  validationPayload.year = dateObj.getFullYear();
+              }
+          } catch(e) { }
+      }
+
+      const validationErrors = validate(validationPayload);
+
+      if (Object.keys(validationErrors).length > 0) {
+          const firstErrorKey = Object.keys(validationErrors)[0];
+          alert(`JSON Validierungsfehler: ${validationErrors[firstErrorKey]}`);
+          throw new Error(`JSON Validierungsfehler: ${validationErrors[firstErrorKey]}`);
+      }
+
+      await BookingService.createBooking(payload);
+      alert(`Termin erfolgreich per JSON gebucht für: ${payload.bookingDate}`);
+      
+      loadBookings();
+      setShowJsonModal(false); 
+
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        alert("Ungültiges JSON Format. Bitte überprüfen.");
+      } else {
+        alert(error.message); 
+      }
+    } finally {
+      setJsonInput("");
     }
   };
 
@@ -273,9 +346,6 @@ export default function BookingPage() {
         <div className="content-split">
           <div className="form-section">
               <form onSubmit={handleSubmit} autoComplete="off">
-                  <input type="text" style={{display: 'none'}} />
-                  <input type="password" style={{display: 'none'}} />
-
                   <div className="form-group">
                       <label tabIndex={tabIndices['salutation']} className="focusable-label">Anrede</label>
                       <div className="slider-wrapper">
@@ -330,23 +400,66 @@ export default function BookingPage() {
                       {isSubmitted && errors.email && <div className="err-msg">{errors.email}</div>}
                   </div>
 
-                  <div className="form-group">
-                      <label tabIndex={0} className="focusable-label" style={{width:'100%'}}>Wunschtermin</label>
-                      <div className="date-row" id="date_split">{getDateInputs()}</div>
-                  </div>
+                  <div className="form-group"><label tabIndex={0} className="focusable-label" style={{width:'100%'}}>Wunschtermin</label><div className="date-row" id="date_split">{getDateInputs()}</div></div>
 
-                  <button 
-                    type="submit" 
-                    className="submit-btn" 
-                    id="submit-btn" 
-                    tabIndex={tabIndices['submit']}
-                  >
-                    Termin verbindlich anfragen
-                  </button>
+                  <button type="submit" className="submit-btn" id="submit-btn" tabIndex={tabIndices['submit']}>Termin verbindlich anfragen</button>
+              
+                  <div style={{textAlign: 'center', marginTop: '1rem'}}>
+                    <span 
+                        onClick={() => setShowJsonModal(true)}
+                        style={{
+                            fontSize: '0.8rem', 
+                            color: '#666', 
+                            textDecoration: 'underline', 
+                            cursor: 'pointer',
+                            opacity: 0.7
+                        }}
+                        className="hover:opacity-100 transition-opacity"
+                    >
+                        stattdessen mittels JSON buchen
+                    </span>
+                  </div>
               </form>
           </div>
           <div className="calendar-section">{renderCalendar()}</div>
         </div>
+
+         {showJsonModal && (
+            <div className="modal-overlay">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h3>Expertenmodus: JSON Buchung</h3>
+                        <p>
+                            Geben Sie das Buchungsobjekt direkt als JSON ein.<br/>
+                        </p>
+                    </div>
+                    
+                    <textarea 
+                        value={jsonInput}
+                        onChange={(e) => setJsonInput(e.target.value)}
+                        placeholder={JSON_PLACEHOLDER}
+                        className="json-textarea"
+                        spellCheck="false"
+                    />
+
+                    <div className="modal-actions">
+                        <button 
+                            onClick={() => setShowJsonModal(false)}
+                            className="btn-cancel"
+                        >
+                            Abbrechen
+                        </button>
+                        <button 
+                            onClick={handleJsonSubmit}
+                            className="btn-confirm"
+                        >
+                            Verbindlich buchen
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+
       </div>
     </ImprovementWrapper>
   );
