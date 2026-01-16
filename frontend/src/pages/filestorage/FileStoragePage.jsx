@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Home } from 'lucide-react';
 import Aurora from "../../components/aurora/Aurora";
 import FileExplorer from './FileExplorer';
 import ImprovementWrapper from '../../components/imp/ImprovementWrapper';
@@ -8,6 +9,7 @@ import "./FileStoragePage.css";
 
 export default function FileStoragePage() {
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const username = searchParams.get('username');
     const [currentPath, setCurrentPath] = useState([]);
     const [currentContents, setCurrentContents] = useState([]);
@@ -68,6 +70,13 @@ export default function FileStoragePage() {
                 <Aurora colorStops={["#1A1A1A", "#46338A", "#0F6A77"]} blend={0.55} amplitude={1.0} speed={0.35} />
                 <div className="filestorage-content">
                     <div className="filestorage-header">
+                        <button
+                            onClick={() => navigate(`/dashboard?username=${username}`)}
+                            className="home-button"
+                            title="Back to Dashboard"
+                        >
+                            <Home size={20} />
+                        </button>
                         <h1>File Storage: {username}</h1>
                     </div>
                     <div className="file-explorer">

@@ -29,4 +29,9 @@ public class AuthController {
         log.info("Received request!");
         return userService.register(user);
     }
+
+    @PostMapping("/reset")
+    public GeneralResponse reset(@RequestBody LoginRequest user) {
+        return userService.resetPassword(user);
+    }
 }

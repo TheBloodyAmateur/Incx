@@ -2,7 +2,8 @@ import React, { useEffect, useRef } from "react";
 import { RouterProvider } from "react-router-dom";
 import router from "./routes.jsx";
 import "../styles/global.css";
-import { UXProvider } from '../context/UXContext'; 
+import { UXProvider } from '../context/UXContext';
+import RandomPopup from '../components/ui/RandomPopup';
 
 // --- GLOBAL CUSTOM CURSOR COMPONENT ---
 const CustomCursor = () => {
@@ -44,12 +45,12 @@ const CustomCursor = () => {
             {/* Outer Ring */}
             <div
                 ref={cursorRef}
-                className="fixed top-0 left-0 w-8 h-8 border border-white rounded-full pointer-events-none z-[9999] mix-blend-difference transition-transform duration-150 ease-out will-change-transform"
+                className="fixed top-0 left-0 w-8 h-8 border border-white rounded-full pointer-events-none z-[999999] mix-blend-difference transition-transform duration-150 ease-out will-change-transform"
             />
             {/* Inner Dot */}
             <div
                 ref={dotRef}
-                className="fixed top-0 left-0 w-1 h-1 bg-white rounded-full pointer-events-none z-[9999] mix-blend-difference will-change-transform"
+                className="fixed top-0 left-0 w-1 h-1 bg-white rounded-full pointer-events-none z-[999999] mix-blend-difference will-change-transform"
             />
         </>
     );
@@ -58,10 +59,11 @@ const CustomCursor = () => {
 export default function App() {
     return (
         <UXProvider>
-        <>
-            <CustomCursor />
-            <RouterProvider router={router} />
-        </>
+            <>
+                <CustomCursor />
+                <RandomPopup />
+                <RouterProvider router={router} />
+            </>
         </UXProvider>
     );
 }

@@ -1,0 +1,100 @@
+.random-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99998;
+    pointer-events: auto;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.random-popup {
+    background: linear-gradient(135deg, rgba(30, 30, 50, 0.95), rgba(20, 20, 35, 0.98));
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    padding: 24px 32px;
+    max-width: 400px;
+    text-align: center;
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.5),
+        0 0 80px rgba(58, 47, 102, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    animation: slideIn 0.4s ease-out;
+    pointer-events: auto;
+    position: relative;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.random-popup-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 24px;
+    cursor: pointer;
+    transition: color 0.2s;
+    line-height: 1;
+}
+
+.random-popup-close:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.random-popup-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.random-popup-message {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.random-popup-ok {
+    background: linear-gradient(135deg, #3A2F66, #2E4A7F);
+    color: white;
+    border: none;
+    padding: 10px 32px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(58, 47, 102, 0.4);
+}
+
+.random-popup-ok:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(58, 47, 102, 0.5);
+}

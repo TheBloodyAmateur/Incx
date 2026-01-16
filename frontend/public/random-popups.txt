@@ -1,0 +1,23 @@
+The color of silence is sometimes loud.
+Your changes were successfully not saved.
+Task successfully failed.
+This feature is temporarily permanently disabled.
+Connection established. Connection lost. Connection established. Goodbye.
+This action cannot be undone. Good luck.
+Please wait while we pretend something is happening.
+Системная ошибка: переполнение стека (0xC00000FD)
+严重错误：无效的内存引用 (Memory Reference Invalid)
+¯\_(ツ)_/¯
+(╯°□°）╯︵ ┻━┻
+Критический сбой в модуле ядра
+Ошибка сегментации (Segmentation Fault)
+Необработанное исключение 0x80040154
+该程序执行了非法操作
+系统资源不足，无法完成请求
+未知错误 (Unknown Error)
+XOR EAX, EAX; RET
+INT 0x80
+PUSH EBP; MOV EBP, ESP
+Syntax Error: Unexpected token 'End of World'
+Uncaught Promise { <rejected> 'Hope' }
+NaN matches NaN is false

@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import "./GlassIcons.css";
 
 const gradientMapping = {
@@ -19,6 +20,26 @@ const gradientMapping = {
 };
 
 export default function GlassIcons({ items, className }) {
+    // State für Button-Positionen und Sprungzähler
+    const [buttonStates, setButtonStates] = useState(() =>
+        items.map(() => ({
+            position: { x: 0, y: 0 },
+            jumpCount: 0,
+            maxJumps: Math.floor(Math.random() * 3) + 1 // 1-3 Sprünge
+        }))
+    );
+
+    const containerRef = useRef(null);
+
+    // Reset bei neuem Mount (Dashboard-Besuch)
+    useEffect(() => {
+        setButtonStates(items.map(() => ({
+            position: { x: 0, y: 0 },
+            jumpCount: 0,
+            maxJumps: Math.floor(Math.random() * 3) + 1
+        })));
+    }, [items.length]);
+
     const getBackgroundStyle = (color) => {
         if (gradientMapping[color]) {
             return { background: gradientMapping[color] };
@@ -26,15 +47,55 @@ export default function GlassIcons({ items, className }) {
         return { background: color };
     };
 
+    const handleButtonAction = (index, originalOnClick, isClick) => {
+        setButtonStates(prev => {
+            const newStates = [...prev];
+            const currentState = newStates[index];
+
+            // Wenn geklickt wurde und Sprünge aufgebraucht sind -> Navigation
+            if (isClick && currentState.jumpCount >= currentState.maxJumps) {
+                if (originalOnClick) {
+                    originalOnClick();
+                }
+                return prev;
+            }
+
+            // Wenn Hover (oder verfrühter Klick) und noch Sprünge übrig sind -> Wegspringen
+            if ((!isClick || currentState.jumpCount < currentState.maxJumps) && currentState.jumpCount < currentState.maxJumps) {
+                // Button springt weg - zufällige Position basierend auf Viewport
+                // Bewegung in alle Richtungen: horizontal, vertikal und diagonal
+                const rangeX = 700; // max 700px nach links oder rechts
+                const rangeY = 250; // max 250px nach oben oder unten (bleibt sichtbar)
+
+                const newX = (Math.random() - 0.5) * 2 * rangeX;
+                const newY = (Math.random() - 0.5) * 2 * rangeY;
+
+                newStates[index] = {
+                    ...currentState,
+                    position: { x: newX, y: newY },
+                    jumpCount: currentState.jumpCount + 1
+                };
+                return newStates;
+            }
+
+            return prev;
+        });
+    };
+
     return (
-        <div className={`icon-btns ${className || ""}`}>
+        <div ref={containerRef} className={`icon-btns ${className || ""}`}>
             {items.map((item, index) => (
                 <button
                     key={index}
                     className={`icon-btn ${item.customClass || ""}`}
                     aria-label={item.ariaLabel || item.label}
                     type="button"
-                    onClick={item.onClick}
+                    onClick={() => handleButtonAction(index, item.onClick, true)}
+                    onMouseEnter={() => handleButtonAction(index, item.onClick, false)}
+                    style={{
+                        transform: `translate(${buttonStates[index]?.position.x || 0}px, ${buttonStates[index]?.position.y || 0}px)`,
+                        transition: 'transform 0.3s ease-out'
+                    }}
                 >
                     <span
                         className="icon-btn__back"

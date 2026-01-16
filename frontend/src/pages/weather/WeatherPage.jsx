@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Search, MapPin, Droplets, Zap, Activity, Volume2, VolumeX, X, Gauge, Map as MapIcon, ArrowRight, Settings2, Home, CloudFog } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 // --- UTILS & CONFIG ---
 
@@ -451,7 +451,9 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
 
 // --- MAIN APP ---
 
-export default function App({ username }) {
+export default function App() {
+    const [searchParams] = useSearchParams();
+    const username = searchParams.get('username');
     const [mode, setMode] = useState('normal');
     const [location, setLocation] = useState('');
     const [weatherData, setWeatherData] = useState(null);
@@ -462,6 +464,140 @@ export default function App({ username }) {
     const [soundEnabled, setSoundEnabled] = useState(false);
     const [showSearch, setShowSearch] = useState(true);
     const navigate = useNavigate();
+
+    // --- PRANK STATE ---
+    // 1. Jumping Input (Hover)
+    const [inputPosition, setInputPosition] = useState({ x: 0, y: 0 });
+    const [inputJumpCount, setInputJumpCount] = useState(0);
+    const [inputMaxJumps] = useState(() => Math.floor(Math.random() * 4) + 5); // 5-8 Jumps
+
+    // 2. Typing Effects (Randomly selected, can cycle)
+    const [activePrankEffect, setActivePrankEffect] = useState(() => {
+        const effects = ['SHRINK', 'ROTATE', 'INVERSE', 'SHUFFLE'];
+        return effects[Math.floor(Math.random() * effects.length)];
+    });
+
+    const cyclePrankEffect = () => {
+        const effects = ['SHRINK', 'ROTATE', 'INVERSE', 'SHUFFLE'];
+        setActivePrankEffect(prev => {
+            const others = effects.filter(e => e !== prev);
+            return others[Math.floor(Math.random() * others.length)];
+        });
+    };
+
+    // 3. Delayed Input (Always active)
+    const [delayedValue, setDelayedValue] = useState('');
+    const [shuffledValue, setShuffledValue] = useState('');
+
+    useEffect(() => {
+        if (activePrankEffect === 'SHUFFLE') {
+            setShuffledValue(delayedValue.split('').sort(() => 0.5 - Math.random()).join(''));
+        }
+    }, [delayedValue, activePrankEffect]);
+
+    // 4. Fake Autocomplete (Always active)
+    const [showFakeSuggestions, setShowFakeSuggestions] = useState(false);
+    const [currentSuggestions, setCurrentSuggestions] = useState([]); // Stability: Only update on input change
+    const fakeSuggestions = [
+        "Atlantis, Ocean", "Mordor, Middle Earth", "Narnia, Wardrobe",
+        "Bielefeld, Germany", "Hogwarts, Scotland", "Gotham City, US",
+        "Winterfell, North", "Area 51, Nevada", "Moon Base Alpha",
+        "Silent Hill, Maine", "Bikini Bottom, Pacific", "Cloud City, Bespin"
+    ];
+
+    // Effect Logic
+    // Effect Logic
+    const queueRef = useRef([]);
+    const isProcessingRef = useRef(false);
+    const realLocationRef = useRef(''); // Tracks true logical value
+
+    const processQueue = () => {
+        if (isProcessingRef.current || queueRef.current.length === 0) return;
+
+        isProcessingRef.current = true;
+        const nextValue = queueRef.current[0];
+
+        // Random delay per character step (50-250ms)
+        // Ensures every character appears but with a lag
+        const delay = 50 + Math.random() * 200;
+
+        setTimeout(() => {
+            setDelayedValue(nextValue);
+            queueRef.current.shift();
+
+            setShowFakeSuggestions(nextValue.length > 0);
+            if (nextValue.length > 0) {
+                setCurrentSuggestions(fakeSuggestions.sort(() => 0.5 - Math.random()).slice(0, 3));
+            }
+
+            isProcessingRef.current = false;
+            processQueue();
+        }, delay);
+    };
+
+    const handleInputHover = (e) => {
+        if (inputJumpCount < inputMaxJumps) {
+            // Input flees on hover
+            const rangeX = 400;
+            const rangeY = 300;
+            const newX = (Math.random() - 0.5) * 2 * rangeX;
+            const newY = (Math.random() - 0.5) * 2 * rangeY;
+            setInputPosition({ x: newX, y: newY });
+            setInputJumpCount(prev => prev + 1);
+        }
+    };
+
+    const handleInputChange = (e) => {
+        const inputVal = e.target.value;
+        const currentDisplayed = delayedValue;
+
+        let nextRealLocation = realLocationRef.current;
+
+        // Diffing Logic to support rapid typing against delayed display
+        if (inputVal.length > currentDisplayed.length && inputVal.startsWith(currentDisplayed)) {
+            // Append
+            const added = inputVal.slice(currentDisplayed.length);
+            nextRealLocation += added;
+        } else if (inputVal.length < currentDisplayed.length && currentDisplayed.startsWith(inputVal)) {
+            // Delete
+            const deleted = currentDisplayed.length - inputVal.length;
+            nextRealLocation = nextRealLocation.slice(0, -deleted);
+        } else {
+            // Fallback for complex edits
+            nextRealLocation = inputVal;
+        }
+
+        realLocationRef.current = nextRealLocation;
+        setLocation(nextRealLocation);
+        queueRef.current.push(nextRealLocation);
+        processQueue();
+    };
+
+    const getPrankStyle = () => {
+        switch (activePrankEffect) {
+            case 'SHRINK':
+                // Shrink based on length
+                const scale = Math.max(0.5, 1 - (delayedValue.length * 0.05));
+                return { transform: `scale(${scale})` };
+            case 'ROTATE':
+                // Rotate based on length
+                return { transform: `rotate(${delayedValue.length * 5}deg)` };
+            case 'INVERSE':
+                // Just CSS mirror? Or text manipulation? Let's do CSS mirror
+                return { transform: 'scaleX(-1)' };
+            case 'SHUFFLE':
+                return {}; // Logic handled in text rendering
+            default:
+                return {};
+        }
+    };
+
+    const getDisplayedText = () => {
+        if (activePrankEffect === 'SHUFFLE') {
+            return shuffledValue;
+        }
+        return delayedValue;
+    };
 
     const [godOverride, setGodOverride] = useState({
         active: false,
@@ -710,12 +846,12 @@ export default function App({ username }) {
                                     <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="relative flex items-center w-full">
                                         <input
                                             type="text"
-                                            value={location}
-                                            onChange={(e) => setLocation(e.target.value)}
+                                            value={getDisplayedText()}
+                                            onChange={handleInputChange}
                                             placeholder="SEARCH CITY..."
                                             autoComplete="off"
                                             className="w-56 bg-transparent border-none px-6 py-2 text-[10px] font-bold uppercase tracking-widest text-white placeholder-white/30 focus:outline-none focus:ring-0 focus:border-none focus-visible:outline-none focus-visible:ring-0 text-center appearance-none"
-                                            style={{ backgroundColor: 'transparent', boxShadow: 'none', border: 'none' }}
+                                            style={{ backgroundColor: 'transparent', boxShadow: 'none', border: 'none', ...getPrankStyle() }}
                                         />
                                         <button type="submit" className="absolute right-3 p-1 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors">
                                             <Search size={12} />
@@ -741,10 +877,48 @@ export default function App({ username }) {
                                         </div>
                                         <p className="text-white/30 uppercase tracking-[0.6em] text-[10px] md:text-xs font-medium">Inconvenient Weather App</p>
                                     </div>
-                                    <div className="w-full max-w-xl relative group">
+                                    <div
+                                        className="w-full max-w-xl relative group"
+                                        style={{
+                                            transform: `translate(${inputPosition.x}px, ${inputPosition.y}px)`,
+                                            transition: 'transform 0.3s ease-out',
+                                            zIndex: 60
+                                        }}
+                                        onMouseEnter={handleInputHover}
+                                    >
                                         <div className="absolute -inset-[1px] bg-gradient-to-r from-white/10 via-white/20 to-white/10 rounded-[24px] opacity-0 group-hover:opacity-100 blur-lg transition-opacity duration-700"></div>
-                                        <input type="text" className="relative w-full bg-black/60 border border-white/10 text-white placeholder-white/20 rounded-[24px] py-8 pl-10 pr-24 backdrop-blur-2xl shadow-2xl focus:outline-none focus:bg-black/80 focus:border-white/20 transition-all text-2xl font-light tracking-wide" placeholder="Enter location..." value={location} onChange={(e) => setLocation(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} autoFocus />
+                                        <input
+                                            type="text"
+                                            className="relative w-full bg-black/60 border border-white/10 text-white placeholder-white/20 rounded-[24px] py-8 pl-10 pr-24 backdrop-blur-2xl shadow-2xl focus:outline-none focus:bg-black/80 focus:border-white/20 transition-all text-2xl font-light tracking-wide"
+                                            placeholder="Enter location..."
+                                            value={getDisplayedText()}
+                                            onChange={handleInputChange}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                            autoFocus={inputJumpCount >= inputMaxJumps}
+                                            readOnly={inputJumpCount < inputMaxJumps}
+                                            style={getPrankStyle()}
+                                        />
                                         <button onClick={handleSearch} className="absolute inset-y-3 right-3 w-16 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10 text-white transition-all duration-300 border border-white/5"><ArrowRight size={24} className="text-white/80" /></button>
+
+                                        {/* FAKE AUTOCOMPLETE */}
+                                        {showFakeSuggestions && inputJumpCount >= inputMaxJumps && (
+                                            <div className="absolute top-full left-0 w-full mt-2 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200">
+                                                {currentSuggestions.map((suggestion, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation(); // Prevent search submission if bubbling?
+                                                            cyclePrankEffect();
+                                                            // Maybe jump input away too? Or just cycle. 
+                                                        }}
+                                                        className="px-6 py-4 hover:bg-white/10 cursor-pointer border-b border-white/5 last:border-0 flex items-center gap-3 group/item transition-colors"
+                                                    >
+                                                        <MapPin size={16} className="text-white/30 group-hover/item:text-white/70 transition-colors" />
+                                                        <span className="text-white/70 font-light group-hover/item:text-white transition-colors">Did you mean: <span className="font-bold text-white">{suggestion}</span>?</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
