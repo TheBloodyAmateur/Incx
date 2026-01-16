@@ -18,7 +18,31 @@ export default function LoginPage() {
     const [username, setUsername] = useState("");
     const [isLogin, setIsLogin] = useState(true);
     const [error, setError] = useState("");
+    const [crypticMessages, setCrypticMessages] = useState([]);
     const navigate = useNavigate();
+
+    // Lade die kryptischen Fehlermeldungen aus der externen Datei
+    useEffect(() => {
+        fetch('/error-messages.txt')
+            .then(response => response.text())
+            .then(text => {
+                const messages = text.split('\n').filter(line => line.trim() !== '');
+                setCrypticMessages(messages);
+            })
+            .catch(err => {
+                console.error('Fehler beim Laden der Fehlermeldungen:', err);
+                // Fallback falls Datei nicht geladen werden kann
+                setCrypticMessages(["Ein unbekannter Fehler ist aufgetreten."]);
+            });
+    }, []);
+
+    const getRandomCrypticError = () => {
+        if (crypticMessages.length === 0) {
+            return "Ein mysteriöser Fehler ist aufgetreten.";
+        }
+        const randomIndex = Math.floor(Math.random() * crypticMessages.length);
+        return crypticMessages[randomIndex];
+    };
 
     const handleAuth = async () => {
         const url = isLogin ? "http://localhost:8080/api/auth/login" : "http://localhost:8080/api/auth/register";
@@ -36,12 +60,13 @@ export default function LoginPage() {
             if (response.ok) {
                 navigate(`/dashboard?username=${username}`);
             } else {
-                const errorData = await response.json();
-                setError(errorData.message || "Authentication failed");
+                // Zeige eine zufällige kryptische Fehlermeldung statt der echten
+                setError(getRandomCrypticError());
             }
         } catch (error) {
             console.error("Error during authentication:", error);
-            setError("An error occurred during authentication. Please check the console for more details.");
+            // Auch bei Netzwerkfehlern eine lustige Meldung zeigen
+            setError(getRandomCrypticError());
         }
     };
 
