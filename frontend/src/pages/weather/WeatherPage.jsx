@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Search, MapPin, Droplets, Zap, Activity, Volume2, VolumeX, X, Gauge, Map as MapIcon, ArrowRight, Settings2, Home, CloudFog } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Search, MapPin, Droplets, Zap, Activity, Volume2, VolumeX, X, Gauge, Map as MapIcon, ArrowRight, Settings2, Home, CloudFog, WifiOff } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useWeather } from '../../context/WeatherContext';
 
@@ -519,6 +519,77 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
     );
 };
 
+
+const StatusBar = ({ status, retry }) => {
+    const tickerItems = [
+        { city: "TOKYO", temp: 24, cond: "RAIN" },
+        { city: "BERLIN", temp: 12, cond: "CLOUDS" },
+        { city: "NEW YORK", temp: 18, cond: "CLEAR" },
+        { city: "LONDON", temp: 9, cond: "FOG" },
+        { city: "PARIS", temp: 15, cond: "WIND" },
+        { city: "MOSCOW", temp: -2, cond: "SNOW" },
+        { city: "SYDNEY", temp: 28, cond: "SUN" },
+        { city: "DUBAI", temp: 35, cond: "CLEAR" },
+    ];
+
+    return (
+        <div className="fixed bottom-0 left-0 w-full z-50 pointer-events-none">
+            {/* Glass Bar */}
+            <div className="bg-black/80 backdrop-blur-md border-t border-white/10 px-6 py-2 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-white/60">
+
+                {/* Left: Status Indicator */}
+                <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${status === 'online' ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : status === 'offline' ? 'bg-red-500 shadow-[0_0_10px_#ef4444] animate-pulse' : 'bg-yellow-500 animate-pulse'}`}></div>
+                    <span className={status === 'offline' ? 'text-red-500 font-bold' : status === 'online' ? 'text-green-500 font-bold' : 'text-yellow-500'}>
+                        {status === 'online' ? 'API ONLINE' : status === 'offline' ? 'API OFFLINE - GOD MODE ACTIVE' : 'INITIALIZING UPLINK...'}
+                    </span>
+                </div>
+
+                {/* Center: Ticker (Only online) */}
+                {status === 'online' && (
+                    <div className="flex-1 overflow-hidden mx-10 relative h-4">
+                        <div className="absolute whitespace-nowrap animate-ticker flex gap-8">
+                            {[...tickerItems, ...tickerItems, ...tickerItems].map((item, i) => (
+                                <span key={i} className="opacity-70">
+                                    <span className="text-white/40 font-bold">{item.city}:</span> <span className="text-white">{item.temp}°C</span> <span className="text-white/60">[{item.cond}]</span>
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Right: Retry Button (Only offline/checking) */}
+                {(status === 'offline' || status === 'checking') && (
+                    <button
+                        onClick={retry}
+                        className="pointer-events-auto hover:text-white transition-colors"
+                        disabled={status === 'checking'}
+                    >
+                        {status === 'checking' ? 'PINGING...' : 'RETRY CONNECTION'}
+                    </button>
+                )}
+
+                {status === 'online' && (
+                    <div className="pointer-events-auto hover:text-white transition-colors">
+                        LATENCY: {Math.floor(20 + Math.random() * 30)}MS
+                    </div>
+                )}
+            </div>
+
+            {/* Ticker Animation Style Injection */}
+            <style>{`
+                @keyframes ticker {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(-33.33%); }
+                }
+                .animate-ticker {
+                    animation: ticker 40s linear infinite;
+                }
+            `}</style>
+        </div>
+    );
+};
+
 // --- MAIN APP ---
 
 export default function App() {
@@ -533,8 +604,52 @@ export default function App() {
     const [isGodMinimized, setIsGodMinimized] = useState(false);
     const [soundEnabled, setSoundEnabled] = useState(false);
     const [showSearch, setShowSearch] = useState(true);
+    const [apiStatus, setApiStatus] = useState('checking'); // checking, online, offline
+
     const navigate = useNavigate();
     const { updateWeather, windDirection, triggerThunder, lastThunderTime } = useWeather();
+
+    // Check API Health
+    const checkApiHealth = useCallback(async () => {
+        setApiStatus('checking');
+
+        // 1. Check Browser Connectivity
+        if (!navigator.onLine) {
+            setApiStatus('offline');
+            setMode('god');
+            setGodOverride(prev => ({ ...prev, active: true, weatherCode: 95 }));
+            return;
+        }
+
+        try {
+            // Using a known city to test connection
+            const res = await fetch(`/api/weather/current?name=London`);
+
+            // 2. Check HTTP Status
+            if (!res.ok) {
+                throw new Error(`API Error: ${res.status}`);
+            }
+
+            // Artificial delay for cool effect
+            setTimeout(() => {
+                setApiStatus('online');
+            }, 800);
+
+        } catch (e) {
+            console.error("API Health Check Failed:", e);
+            setApiStatus('offline');
+            setShowOfflineDialog(true);
+            // setMode('god'); // Removed auto-switch
+            // setGodOverride(prev => ({ ...prev, active: true, weatherCode: 95 })); 
+        }
+    }, [setMode]);
+
+    useEffect(() => {
+        checkApiHealth(); // Initial check
+        const interval = setInterval(checkApiHealth, 10000); // Check every 10 seconds
+        return () => clearInterval(interval);
+    }, [checkApiHealth]);
+
 
 
     // --- PRANK STATE ---
@@ -743,8 +858,24 @@ export default function App() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [mode]);
 
+    const [showOfflineDialog, setShowOfflineDialog] = useState(false);
+
     const handleSearch = async () => {
         if (!location) return;
+
+        // OFFLINE HANDLING
+        if (!navigator.onLine) {
+            setShowOfflineDialog(true);
+            return;
+        }
+
+        // SWITCH TO NORMAL IF IN GOD MODE
+        if (mode === 'god') {
+            setMode('normal');
+            // Also ensure override is disabled so we see real data
+            setGodOverride(prev => ({ ...prev, active: false }));
+        }
+
         setLoading(true);
         setError('');
         try {
@@ -910,6 +1041,42 @@ export default function App() {
 
     return (
         <ImprovementWrapper>
+            <StatusBar status={apiStatus} retry={checkApiHealth} />
+
+            {/* Offline Confirmation Dialog */}
+            {showOfflineDialog && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-zinc-900 border border-white/10 p-8 rounded-3xl max-w-sm text-center shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-red-500/50"></div>
+                        <WifiOff className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-white mb-2 tracking-wide">CONNECTION LOST</h3>
+                        <p className="text-white/50 text-[11px] uppercase tracking-wider mb-8 leading-relaxed">
+                            Unable to verify location data. <br />
+                            External validation required.
+                        </p>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowOfflineDialog(false);
+                                    setMode('god');
+                                    setGodOverride(prev => ({ ...prev, active: true, weatherCode: 95 }));
+                                    setError('OFFLINE MODE - GOD ACCESS GRANTED');
+                                    setShowSearch(false);
+                                }}
+                                className="w-full py-3 bg-white text-black text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-gray-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                            >
+                                Activate God Mode
+                            </button>
+                            <button
+                                onClick={() => setShowOfflineDialog(false)}
+                                className="w-full py-3 bg-white/5 text-white/40 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-white/10 hover:text-white transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className={`min-h-screen w-full relative overflow-x-hidden transition-colors duration-1000 ${getBgClass()} ${getTextClass()} font-sans selection:bg-white/20 selection:text-white cursor-none`}>
 
