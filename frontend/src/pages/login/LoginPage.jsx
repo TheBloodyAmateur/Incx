@@ -6,6 +6,7 @@ import logo from "../../assets/logo.png";
 import "./LoginPage.css";
 import ImprovementWrapper from '../../components/imp/ImprovementWrapper';
 import { useUX } from '../../context/UXContext';
+import ForgotGames from "../../components/ui/ForgotGames";
 
 export default function LoginPage() {
     const { loadImprovementsForPage } = useUX();
@@ -19,6 +20,7 @@ export default function LoginPage() {
     const [isLogin, setIsLogin] = useState(true);
     const [error, setError] = useState("");
     const [crypticMessages, setCrypticMessages] = useState([]);
+    const [showForgotGames, setShowForgotGames] = useState(false);
     const navigate = useNavigate();
 
     // Lade die kryptischen Fehlermeldungen aus der externen Datei
@@ -114,10 +116,11 @@ export default function LoginPage() {
                     <p onClick={() => setIsLogin(!isLogin)} className="toggle-auth">
                         {isLogin ? "Need an account? Register" : "Already have an account? Login"}
                     </p>
-                    <a href="/forgot" className="forgot-link">
+                    <a href="#" onClick={(e) => { e.preventDefault(); setShowForgotGames(true); }} className="forgot-link">
                         Forgot Password?
                     </a>
                 </form>
+                {showForgotGames && <ForgotGames username={username} onClose={() => setShowForgotGames(false)} onWin={() => setShowForgotGames(false)} />}
             </div>
         </ImprovementWrapper>
     );

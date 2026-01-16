@@ -62,4 +62,16 @@ public class AuthService {
 
         return new GeneralResponse("User registered succesfully!");
     }
+
+    public GeneralResponse resetPassword(LoginRequest request) {
+        log.info("Resetting password for user {}", request.getUsername());
+        Optional<User> userOptional = userRepository.findByUsername(request.getUsername());
+        if (userOptional.isEmpty()) {
+             throw new RuntimeException("User not found");
+        }
+        User user = userOptional.get();
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        userRepository.save(user);
+        return new GeneralResponse("Password reset successfully!");
+    }
 }

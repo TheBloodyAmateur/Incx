@@ -1,27 +1,23 @@
-Wie nennt man einen Bumerang, der nicht zurückkommt? Stock.
-Ich wollte einen Witz über Papier erzählen, aber der ist tearable.
-Ich habe einen Witz über eine Mauer, aber den können Sie nicht überwinden.
-Sie atmen jetzt manuell. Gern geschehen.
-Irgendwo existiert ein Foto von Ihnen, das Sie noch nie gesehen haben.
-Diese Nachricht hat keinen Sinn. Trotzdem haben Sie bis hierher gelesen.
-Diese Nachricht enthält keine Information.
-Die Farbe der Stille ist manchmal laut.
-Ihre Änderungen wurden erfolgreich nicht gespeichert.
-Die Anwendung funktioniert wie erwartet. Erwartungen waren niedrig.
-Aktion erfolgreich fehlgeschlagen.
-Diese Funktion ist vorübergehend dauerhaft deaktiviert.
-Update wird installiert. Geschätzte Zeit: Irgendwann.
-Verbindung hergestellt. Verbindung verloren. Verbindung hergestellt. Auf Wiedersehen.
-Ihre Datei wurde in einem Format gespeichert, das niemand öffnen kann.
-Backup erfolgreich. Wiederherstellung nicht möglich.
-Die Software hat sich selbst neu gestartet. Sie waren nicht gefragt worden.
-Cache geleert. Alle Ihre Präferenzen sind jetzt Erinnerungen.
-Diese Aktion kann nicht rückgängig gemacht werden. Viel Glück.
-Wird geladen... Wird immer noch geladen... Haben Sie Geduld? Geduld wird auch geladen.
-Systemressourcen optimiert. Performance bleibt identisch.
-Diese Popup-Nachricht ist wichtig. Inhalt folgt nie.
-Bitte warten, während wir so tun, als würde etwas passieren.
-Die Anwendung reagiert nicht. Sie auch nicht. Macht zwei von uns.
-Ihr Feedback wurde erfolgreich ignoriert. Danke für Ihre Zeit.
-Diese Funktion existiert aus historischen Gründen. Niemand weiß welchen.
-Laden fehlgeschlagen. Bitte versuchen Sie es erneut, um erneut zu scheitern.
+The color of silence is sometimes loud.
+Your changes were successfully not saved.
+Task successfully failed.
+This feature is temporarily permanently disabled.
+Connection established. Connection lost. Connection established. Goodbye.
+This action cannot be undone. Good luck.
+Please wait while we pretend something is happening.
+Системная ошибка: переполнение стека (0xC00000FD)
+严重错误：无效的内存引用 (Memory Reference Invalid)
+¯\_(ツ)_/¯
+(╯°□°）╯︵ ┻━┻
+Критический сбой в модуле ядра
+Ошибка сегментации (Segmentation Fault)
+Необработанное исключение 0x80040154
+该程序执行了非法操作
+系统资源不足，无法完成请求
+未知错误 (Unknown Error)
+XOR EAX, EAX; RET
+INT 0x80
+PUSH EBP; MOV EBP, ESP
+Syntax Error: Unexpected token 'End of World'
+Uncaught Promise { <rejected> 'Hope' }
+NaN matches NaN is false

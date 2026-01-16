@@ -1,12 +1,9 @@
 0xDEADBEEF: Stack overflow in authentication module. Too many credentials, not enough RAM.
-ERR-42: Expected answer to life, received null pointer instead.
-0x0BADC0DE: Malformed request detected. Your bits are showing.
 SEGFAULT-7: Memory access violation. Your password tried to escape the heap.
-ERR-418: HTTP Teapot Protocol activated. Cannot brew coffee with authentication tokens.
+ERR-418: HTTP Teapot Protocol activated.
 0xCAFEBABE: Java runtime exception. Your login was garbage collected.
 NaN: Authentication result is not a number. Tried to divide your credentials by zero.
 0xFEEDFACE: Buffer underflow. Not enough data to satisfy the authentication daemon.
-ERR-1337: Elite hacker detected. Just kidding, wrong password.
 KERN-PANIC: Kernel panic - not syncing. VFS: Unable to mount user credentials.
 0xBAADF00D: Heap corruption detected. Your password contains too many umlauts.
 ERR-503: Service temporarily unavailable. The hamsters powering the server are on break.
@@ -16,10 +13,8 @@ TIMEOUT-∞: Request timed out after infinity milliseconds. Please wait.
 ERR-666: Demonic exception caught. Your credentials have been cursed.
 NULLPTR-EX: NullPointerException at line 42. Username cannot be void.
 0xBEEFCAFE: Mixed protocol error. Your login speaks Java but the server speaks C++.
-ERR-2FA: Second factor not found. Your authenticator app is in another castle.
-SIGKILL-9: Process terminated with extreme prejudice. Login denied by angry sysadmin.
 0xFACEFEED: Interface mismatch. Your face does not match the expected input format.
 ERR-CHMOD: Permission denied. You do not have execute rights on authentication.
 0xBADDCAFE: Decaffeinated exception. Server running on low energy mode.
-ENOENT: No such user or directory. Did you check under the couch cushions?
+ENOENT: No such user or directory. Did you check under the keyboard?
 0x8BADF00D: Watchdog timeout. Your request took too long and was eaten by the system.

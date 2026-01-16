@@ -3,28 +3,46 @@ import { useNavigate, useLocation } from "react-router-dom";
 import "./CookieConsent.css";
 
 export default function CookieConsent() {
-    const [accepted, setAccepted] = useState(false);
+    const [show, setShow] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Reset cookie consent state on every route change
     useEffect(() => {
-        setAccepted(false);
+        const consent = localStorage.getItem('cookieConsent');
+
+        if (location.pathname === '/') {
+            // Login Page: Only show if no decision made yet
+            if (consent === 'rejected' || consent === 'accepted') {
+                setShow(false);
+            } else {
+                setShow(true);
+            }
+        } else {
+            // Internal Pages: Show if not explicitly accepted
+            if (consent === 'accepted') {
+                setShow(false);
+            } else {
+                setShow(true);
+            }
+        }
     }, [location.pathname]);
 
     const handleAccept = () => {
-        setAccepted(true);
+        localStorage.setItem('cookieConsent', 'accepted');
+        setShow(false);
     };
 
     const handleDecline = () => {
-        // Navigate to login page on decline
-        navigate("/");
-        // Reset accepted state so popup shows again on login page
-        setAccepted(false);
+        localStorage.setItem('cookieConsent', 'rejected');
+        setShow(false);
+        // If declining on internal page, kick to login.
+        // If already on login, stay there (and popup hides).
+        if (location.pathname !== '/') {
+            navigate("/");
+        }
     };
 
-    // Don't show overlay if already accepted
-    if (accepted) {
+    if (!show) {
         return null;
     }
 
