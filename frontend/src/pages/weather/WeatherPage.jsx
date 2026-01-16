@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Search, MapPin, Droplets, Zap, Activity, Volume2, VolumeX, X, Gauge, Map as MapIcon, ArrowRight, Settings2, Home, CloudFog } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 // --- UTILS & CONFIG ---
 
@@ -451,7 +451,9 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
 
 // --- MAIN APP ---
 
-export default function App({ username }) {
+export default function App() {
+    const [searchParams] = useSearchParams();
+    const username = searchParams.get('username');
     const [mode, setMode] = useState('normal');
     const [location, setLocation] = useState('');
     const [weatherData, setWeatherData] = useState(null);
