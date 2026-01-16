@@ -382,13 +382,38 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
     return (
         <div className="fixed inset-0 pointer-events-none z-20 overflow-hidden">
 
-            {/* SUN GLARE */}
+            {/* SUN GLARE - BLINDING MODE */}
             {isSunny && (
-                <div className="absolute top-[-20%] left-[-20%] w-[150vw] h-[150vh] z-[15] pointer-events-none mix-blend-screen opacity-60 animate-pulse-slow"
-                    style={{
-                        background: 'radial-gradient(circle at 80% 20%, rgba(255,255,200,0.8) 0%, rgba(255,200,100,0.4) 20%, transparent 60%)'
-                    }}
-                ></div>
+                <div className="absolute inset-0 z-[100] pointer-events-none">
+                    {/* 1. Global Washout (Overexposure) - Reduces contrast of the whole app */}
+                    <div className="absolute inset-0 bg-white/10 mix-blend-screen pointer-events-none"></div>
+
+                    {/* 2. Deep Atmosphere Glow (Overlay) - Warms everything up violently */}
+                    <div className="absolute top-[-40%] right-[-20%] w-[150vw] h-[150vw] pointer-events-none mix-blend-overlay opacity-80"
+                        style={{ background: 'radial-gradient(circle, rgba(255,200,50,0.6) 0%, rgba(255,100,0,0.2) 40%, transparent 70%)', filter: 'blur(60px)' }}></div>
+
+                    {/* 3. THE SUN (Screen) - Pure blinding white source */}
+                    <div className="absolute top-[-20%] right-[-20%] w-[100vw] h-[100vw] pointer-events-none mix-blend-screen opacity-100 animate-pulse-slow"
+                        style={{ background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,240,0.8) 20%, rgba(255,220,150,0.5) 40%, transparent 70%)', filter: 'blur(40px)' }}></div>
+
+                    {/* Dynamic Lens Flare Elements (Parallax) */}
+                    <div
+                        className="absolute w-48 h-48 bg-white/20 rounded-full blur-3xl pointer-events-none mix-blend-screen transition-transform duration-75 ease-out"
+                        style={{
+                            left: '50%',
+                            top: '50%',
+                            transform: `translate(${mousePos.x * -0.05}px, ${mousePos.y * -0.05}px)`
+                        }}
+                    ></div>
+                    <div
+                        className="absolute w-24 h-24 bg-amber-100/40 rounded-full blur-2xl pointer-events-none mix-blend-screen transition-transform duration-100 ease-out"
+                        style={{
+                            left: '60%',
+                            top: '40%',
+                            transform: `translate(${mousePos.x * -0.08}px, ${mousePos.y * -0.08}px)`
+                        }}
+                    ></div>
+                </div>
             )}
 
             {showRain && (
@@ -778,6 +803,9 @@ export default function App() {
     }, [weatherType, triggerThunder]);
 
     const getBgClass = () => {
+        // SEARCH PAGE (Neutral Background)
+        if (!weatherData && !godOverride.active) return 'bg-zinc-950';
+
         const isWarm = currentDisplay.temp >= 20;
         const isDev = mode === 'dev';
 
@@ -890,7 +918,7 @@ export default function App() {
                     weatherType={weatherType}
                     windSpeed={currentDisplay.wind}
                     mousePos={mousePos}
-                    active={isEffectsActive}
+                    active={isEffectsActive && (weatherData || godOverride.active)}
                     soundEnabled={soundEnabled}
                     windDirection={windDirection}
                     lastThunderTime={lastThunderTime}
