@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Search, MapPin, Droplets, Zap, Activity, Volume2, VolumeX, X, Gauge, Map as MapIcon, ArrowRight, Settings2, Home, CloudFog } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useWeather } from '../../context/WeatherContext';
 
 // --- UTILS & CONFIG ---
 
@@ -144,45 +145,6 @@ const DraggableCloud = ({ initialX, initialY, scale, opacity }) => {
     );
 };
 
-const CustomCursor = () => {
-    const cursorRef = useRef(null);
-    const dotRef = useRef(null);
-
-    useEffect(() => {
-        const moveCursor = (e) => {
-            if (cursorRef.current) {
-                cursorRef.current.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) translate(-50%, -50%)`;
-            }
-            if (dotRef.current) {
-                dotRef.current.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) translate(-50%, -50%)`;
-            }
-        };
-
-        const clickEffect = () => {
-            if (cursorRef.current) {
-                cursorRef.current.classList.add('scale-75');
-                setTimeout(() => {
-                    if (cursorRef.current) cursorRef.current.classList.remove('scale-75');
-                }, 150);
-            }
-        };
-
-        window.addEventListener('mousemove', moveCursor);
-        window.addEventListener('mousedown', clickEffect);
-
-        return () => {
-            window.removeEventListener('mousemove', moveCursor);
-            window.removeEventListener('mousedown', clickEffect);
-        };
-    }, []);
-
-    return (
-        <>
-            <div ref={cursorRef} className="fixed top-0 left-0 w-8 h-8 border border-white rounded-full pointer-events-none z-[9999] mix-blend-difference transition-transform duration-150 ease-out will-change-transform" />
-            <div ref={dotRef} className="fixed top-0 left-0 w-1 h-1 bg-white rounded-full pointer-events-none z-[9999] mix-blend-difference will-change-transform" />
-        </>
-    );
-};
 
 const LocationMap = ({ lat, lon }) => {
     if (!lat || !lon) return null;
@@ -315,53 +277,110 @@ const ForecastGraph = ({ data }) => {
     );
 };
 
-const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled }) => {
+const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled, windDirection = { x: 1, y: 0 }, lastThunderTime }) => {
     if (!active) return null;
 
     const isWindy = windSpeed > 20;
     const isThunder = weatherType === 'thunder';
     const isSunny = weatherType === 'clear';
 
-    useEffect(() => {
-        if (isThunder && soundEnabled) {
-            const interval = setInterval(() => { if (Math.random() > 0.7) playThunderSound(); }, 4000);
-            return () => clearInterval(interval);
-        }
-    }, [isThunder, soundEnabled]);
+    // Smooth wind angle transition using state
+    const [displayAngle, setDisplayAngle] = useState(0);
+    const targetAngle = Math.atan2(windDirection.y, windDirection.x) * (180 / Math.PI);
 
-    const rainParticles = useMemo(() => [...Array(300)].map((_, i) => ({
+    // Smoothly interpolate to target angle
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setDisplayAngle(prev => {
+                const diff = targetAngle - prev;
+                // Handle angle wrapping
+                const shortestDiff = ((diff + 180) % 360) - 180;
+                if (Math.abs(shortestDiff) < 1) return targetAngle;
+                return prev + shortestDiff * 0.1;
+            });
+        }, 16);
+        return () => clearInterval(interval);
+    }, [targetAngle]);
+
+    // Thunder flash state (controlled via prop)
+    const [showFlash, setShowFlash] = useState(false);
+
+    useEffect(() => {
+        if (!isThunder || !lastThunderTime) {
+            setShowFlash(false);
+            return;
+        }
+
+        // New Sequence:
+        // Main Strike: Flash (80ms) -> Gap (50ms) -> Flash (80ms)
+        // After-Flashes: Gap (150ms) -> Flash (50ms) -> Gap (50ms) -> Flash (50ms)
+
+        // 1. First main flash
+        setShowFlash(true);
+        if (soundEnabled) playThunderSound();
+        const t1 = setTimeout(() => setShowFlash(false), 80);
+
+        // 2. Second main flash
+        const t2 = setTimeout(() => {
+            setShowFlash(true);
+            setTimeout(() => setShowFlash(false), 80);
+        }, 130); // 80 + 50 gap
+
+        // 3. After-flash 1
+        const t3 = setTimeout(() => {
+            setShowFlash(true);
+            setTimeout(() => setShowFlash(false), 40);
+        }, 360); // 130 + 80 + 150 gap
+
+        // 4. After-flash 2
+        const t4 = setTimeout(() => {
+            setShowFlash(true);
+            setTimeout(() => setShowFlash(false), 40);
+        }, 450); // 360 + 40 + 50 gap
+
+        return () => {
+            clearTimeout(t1);
+            clearTimeout(t2);
+            clearTimeout(t3);
+            clearTimeout(t4);
+        };
+    }, [lastThunderTime, isThunder, soundEnabled]);
+
+    // Rain particles with staggered starts (negative delays so animation is already in progress)
+    const rainParticles = useMemo(() => [...Array(400)].map((_, i) => ({
         id: i,
-        left: Math.random() * 100,
+        left: Math.random() * 150 - 25, // -25% to 125% for full coverage when rotated
+        top: Math.random() * 100, // Random starting positions along the fall
         duration: 0.3 + Math.random() * 0.2,
-        delay: Math.random() * 2
+        delay: -(Math.random() * 2) // Negative delay = already in progress
     })), []);
 
-    // Bigger, more visible snow particles
+    // Snow particles with staggered starts
     const snowParticles = useMemo(() => [...Array(200)].map((_, i) => ({
         id: i,
-        left: Math.random() * 100,
-        duration: 2 + Math.random() * 4, // Faster fall
-        delay: Math.random() * 2,
-        size: 8 + Math.random() * 8 // Bigger flakes
+        left: Math.random() * 150 - 25,
+        top: Math.random() * 100,
+        duration: 2 + Math.random() * 4,
+        delay: -(Math.random() * 4),
+        size: 8 + Math.random() * 8
     })), []);
 
+    // Wind particles with staggered starts
     const windParticles = useMemo(() => [...Array(30)].map((_, i) => ({
         id: i,
         top: Math.random() * 100,
+        left: Math.random() * 100,
         duration: 0.4 + Math.random(),
-        delay: Math.random() * 2
+        delay: -(Math.random() * 2)
     })), []);
-
-
 
     // Effect Conditions
     const showRain = weatherType === 'rain' || weatherType === 'thunder';
-    const showThunderFlash = weatherType === 'thunder';
     const showWind = isWindy || weatherType === 'thunder';
     const showSnow = weatherType === 'snow';
 
     return (
-        <div className={`fixed inset-0 pointer-events-none z-20 overflow-hidden ${showThunderFlash ? 'animate-shake-wind' : ''}`}>
+        <div className="fixed inset-0 pointer-events-none z-20 overflow-hidden">
 
             {/* SUN GLARE */}
             {isSunny && (
@@ -372,19 +391,25 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
                 ></div>
             )}
 
-            {/* CLOUDS */}
-
-
-            {/* RAIN */}
             {showRain && (
-                <div className="absolute inset-0 z-[60]">
+                <div
+                    className="absolute z-[60] transition-transform duration-500 ease-out"
+                    style={{
+                        top: '-50%',
+                        left: '-50%',
+                        width: '200%',
+                        height: '200%',
+                        transform: `rotate(${isWindy ? windDirection.x * 15 : 0}deg)`,
+                        transformOrigin: 'center center'
+                    }}
+                >
                     {rainParticles.map((p) => (
                         <div
                             key={p.id}
-                            className="absolute bg-blue-300/70 w-[2px] h-32 rounded-full animate-fall"
+                            className="absolute bg-blue-300/70 w-[2px] h-24 rounded-full animate-fall"
                             style={{
                                 left: `${p.left}%`,
-                                top: '-150px',
+                                top: `${p.top}%`,
                                 animationDuration: `${p.duration}s`,
                                 animationDelay: `${p.delay}s`
                             }}
@@ -393,9 +418,19 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
                 </div>
             )}
 
-            {/* SNOW */}
+            {/* SNOW - Larger container for full coverage */}
             {showSnow && (
-                <div className="absolute inset-0 z-[80]">
+                <div
+                    className="absolute z-[80] transition-transform duration-500 ease-out"
+                    style={{
+                        top: '-50%',
+                        left: '-50%',
+                        width: '200%',
+                        height: '200%',
+                        transform: `rotate(${isWindy ? windDirection.x * 15 : 0}deg)`,
+                        transformOrigin: 'center center'
+                    }}
+                >
                     {snowParticles.map((p) => (
                         <div
                             key={p.id}
@@ -403,7 +438,7 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
                             style={{
                                 width: `${p.size}px`, height: `${p.size}px`,
                                 left: `${p.left}%`,
-                                top: '-20px',
+                                top: `${p.top}%`,
                                 animationDuration: `${p.duration}s`,
                                 animationDelay: `${p.delay}s`
                             }}
@@ -412,9 +447,9 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
                 </div>
             )}
 
-            {/* THUNDER FLASH */}
-            {showThunderFlash && (
-                <div className="absolute inset-0 bg-white animate-flash opacity-0 mix-blend-overlay z-[56]"></div>
+            {/* THUNDER FLASH - Only on actual strikes */}
+            {showFlash && (
+                <div className="absolute inset-0 bg-white/80 z-[56]"></div>
             )}
 
             {/* FOG - Clear Hole via Mask */}
@@ -428,16 +463,26 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
                 ></div>
             )}
 
-            {/* WIND */}
+            {/* WIND - Larger container with smooth rotation */}
             {showWind && (
-                <div className="absolute inset-0 z-[55]">
+                <div
+                    className="absolute z-[55] transition-transform duration-500 ease-out"
+                    style={{
+                        top: '-50%',
+                        left: '-50%',
+                        width: '200%',
+                        height: '200%',
+                        transform: `rotate(${displayAngle}deg)`,
+                        transformOrigin: 'center center'
+                    }}
+                >
                     {windParticles.map((p) => (
                         <div
                             key={p.id}
                             className="absolute bg-white/40 w-96 h-[4px] rounded-full animate-wind-fly blur-[1px]"
                             style={{
                                 top: `${p.top}%`,
-                                left: `-20%`,
+                                left: `${p.left}%`,
                                 animationDuration: `${p.duration}s`,
                                 animationDelay: `${p.delay}s`
                             }}
@@ -464,6 +509,8 @@ export default function App() {
     const [soundEnabled, setSoundEnabled] = useState(false);
     const [showSearch, setShowSearch] = useState(true);
     const navigate = useNavigate();
+    const { updateWeather, windDirection, triggerThunder, lastThunderTime } = useWeather();
+
 
     // --- PRANK STATE ---
     // 1. Jumping Input (Hover)
@@ -609,6 +656,24 @@ export default function App() {
         lon: -74.0060
     });
 
+    // Sync weather data with global context for cursor effects
+    useEffect(() => {
+        if (weatherData || godOverride.active) {
+            const data = godOverride.active ? {
+                temperature: godOverride.temperature,
+                windSpeed: godOverride.windSpeed,
+                weatherType: getWeatherType(godOverride.weatherCode),
+                viewMode: mode
+            } : {
+                temperature: weatherData?.temp,
+                windSpeed: weatherData?.wind,
+                weatherType: getWeatherType(weatherData?.code),
+                viewMode: mode
+            };
+            updateWeather(data);
+        }
+    }, [weatherData, godOverride.active, godOverride.temperature, godOverride.windSpeed, godOverride.weatherCode, mode, updateWeather]);
+
     useEffect(() => {
         const handleMouseMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
         window.addEventListener('mousemove', handleMouseMove);
@@ -697,6 +762,20 @@ export default function App() {
 
     const weatherType = getWeatherType(currentDisplay.code);
     const isEffectsActive = mode !== 'dev';
+
+    // Trigger thunder periodically (Must be after weatherType definition)
+    useEffect(() => {
+        if (weatherType !== 'thunder') return;
+
+        // Initial trigger
+        triggerThunder();
+
+        const thunderInterval = setInterval(() => {
+            triggerThunder();
+        }, 3000 + Math.random() * 2000); // 3-5 seconds
+
+        return () => clearInterval(thunderInterval);
+    }, [weatherType, triggerThunder]);
 
     const getBgClass = () => {
         const isWarm = currentDisplay.temp >= 20;
@@ -806,7 +885,6 @@ export default function App() {
 
             <div className={`min-h-screen w-full relative overflow-x-hidden transition-colors duration-1000 ${getBgClass()} ${getTextClass()} font-sans selection:bg-white/20 selection:text-white cursor-none`}>
 
-                <CustomCursor />
 
                 <WeatherOverlay
                     weatherType={weatherType}
@@ -814,6 +892,8 @@ export default function App() {
                     mousePos={mousePos}
                     active={isEffectsActive}
                     soundEnabled={soundEnabled}
+                    windDirection={windDirection}
+                    lastThunderTime={lastThunderTime}
                 />
 
                 <div className={`relative flex flex-col min-h-screen`}>

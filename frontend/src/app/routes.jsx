@@ -8,11 +8,13 @@ import WeatherPage from "../pages/weather/WeatherPage";
 import FileStoragePage from "../pages/filestorage/FileStoragePage";
 import CookieConsent from "../components/ui/CookieConsent";
 import RandomPopup from "../components/ui/RandomPopup";
+import WeatherCursor from "../components/ui/WeatherCursor";
 
-// Root Layout that includes CookieConsent and RandomPopup on every page
+// Root Layout that includes CookieConsent, RandomPopup and WeatherCursor
 function RootLayout() {
     return (
         <>
+            <WeatherCursor />
             <CookieConsent />
             <RandomPopup />
             <Outlet />
