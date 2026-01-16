@@ -10,12 +10,15 @@ import CookieConsent from "../components/ui/CookieConsent";
 import RandomPopup from "../components/ui/RandomPopup";
 import WeatherCursor from "../components/ui/WeatherCursor";
 
+import { useUX } from "../context/UXContext";
+
 // Root Layout that includes CookieConsent, RandomPopup and WeatherCursor
 function RootLayout() {
+    const { disclaimerAccepted } = useUX();
     return (
         <>
             <WeatherCursor />
-            <CookieConsent />
+            {disclaimerAccepted && <CookieConsent />}
             <RandomPopup />
             <Outlet />
         </>

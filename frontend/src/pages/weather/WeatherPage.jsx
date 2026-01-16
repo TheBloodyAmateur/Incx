@@ -1112,7 +1112,6 @@ export default function App() {
                     <div className="relative z-50 flex justify-between items-start p-8 w-full max-w-screen-2xl mx-auto pointer-events-none">
                         <div className="flex gap-4 relative z-50 pointer-events-auto">
                             <button onClick={() => navigate(`/dashboard?username=${username}`)} className={`p-3 rounded-full backdrop-blur-md transition-all duration-300 border border-white/5 hover:bg-white/10 text-white/80 hover:text-white`} title="Back to Dashboard"><Home size={18} /></button>
-                            <button onClick={() => setSoundEnabled(!soundEnabled)} className={`p-3 rounded-full backdrop-blur-md border border-white/5 transition-all ${soundEnabled ? 'bg-white/10 text-white' : 'bg-transparent text-white/40 hover:text-white'}`}><Volume2 size={18} /></button>
                         </div>
                         <div className="absolute top-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-3 z-40 pointer-events-auto w-full max-w-md">
                             {/* MODE SWITCHER */}
