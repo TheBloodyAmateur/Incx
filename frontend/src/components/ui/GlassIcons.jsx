@@ -47,20 +47,28 @@ export default function GlassIcons({ items, className }) {
         return { background: color };
     };
 
-    const handleButtonClick = (index, originalOnClick) => {
+    const handleButtonAction = (index, originalOnClick, isClick) => {
         setButtonStates(prev => {
             const newStates = [...prev];
             const currentState = newStates[index];
 
-            // Prüfen ob noch Sprünge übrig sind
-            if (currentState.jumpCount < currentState.maxJumps) {
+            // Wenn geklickt wurde und Sprünge aufgebraucht sind -> Navigation
+            if (isClick && currentState.jumpCount >= currentState.maxJumps) {
+                if (originalOnClick) {
+                    originalOnClick();
+                }
+                return prev;
+            }
+
+            // Wenn Hover (oder verfrühter Klick) und noch Sprünge übrig sind -> Wegspringen
+            if ((!isClick || currentState.jumpCount < currentState.maxJumps) && currentState.jumpCount < currentState.maxJumps) {
                 // Button springt weg - zufällige Position basierend auf Viewport
                 // Bewegung in alle Richtungen: horizontal, vertikal und diagonal
                 const rangeX = 700; // max 700px nach links oder rechts
                 const rangeY = 250; // max 250px nach oben oder unten (bleibt sichtbar)
 
-                const newX = (Math.random() - 0.5) * 2 * rangeX; // -400 bis +400
-                const newY = (Math.random() - 0.5) * 2 * rangeY; // -300 bis +300
+                const newX = (Math.random() - 0.5) * 2 * rangeX;
+                const newY = (Math.random() - 0.5) * 2 * rangeY;
 
                 newStates[index] = {
                     ...currentState,
@@ -68,13 +76,9 @@ export default function GlassIcons({ items, className }) {
                     jumpCount: currentState.jumpCount + 1
                 };
                 return newStates;
-            } else {
-                // Alle Sprünge verbraucht - Navigation ausführen
-                if (originalOnClick) {
-                    originalOnClick();
-                }
-                return prev;
             }
+
+            return prev;
         });
     };
 
@@ -86,7 +90,8 @@ export default function GlassIcons({ items, className }) {
                     className={`icon-btn ${item.customClass || ""}`}
                     aria-label={item.ariaLabel || item.label}
                     type="button"
-                    onClick={() => handleButtonClick(index, item.onClick)}
+                    onClick={() => handleButtonAction(index, item.onClick, true)}
+                    onMouseEnter={() => handleButtonAction(index, item.onClick, false)}
                     style={{
                         transform: `translate(${buttonStates[index]?.position.x || 0}px, ${buttonStates[index]?.position.y || 0}px)`,
                         transition: 'transform 0.3s ease-out'

@@ -8,7 +8,9 @@
     align-items: center;
     justify-content: center;
     z-index: 99998;
-    pointer-events: none;
+    pointer-events: auto;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
     animation: fadeIn 0.3s ease-out;
 }
 
