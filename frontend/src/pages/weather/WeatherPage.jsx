@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Search, MapPin, Droplets, Zap, Activity, Volume2, VolumeX, X, Gauge, Map as MapIcon, ArrowRight, Settings2, Home, CloudFog, WifiOff } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useWeather } from '../../context/WeatherContext';
+import { useUX } from '../../context/UXContext';
 
 // --- UTILS & CONFIG ---
 
@@ -608,6 +609,11 @@ export default function App() {
 
     const navigate = useNavigate();
     const { updateWeather, windDirection, triggerThunder, lastThunderTime } = useWeather();
+    const { loadImprovementsForPage } = useUX();
+
+    useEffect(() => {
+        loadImprovementsForPage('WeatherPage');
+    }, [loadImprovementsForPage]);
 
     // Check API Health
     const checkApiHealth = useCallback(async () => {
@@ -1078,10 +1084,11 @@ export default function App() {
                 </div>
             )}
 
-            <div className={`min-h-screen w-full relative overflow-x-hidden transition-colors duration-1000 ${getBgClass()} ${getTextClass()} font-sans selection:bg-white/20 selection:text-white cursor-none`}>
+            <div id="weather-container" className={`min-h-screen w-full relative overflow-x-hidden transition-colors duration-1000 ${getBgClass()} ${getTextClass()} font-sans selection:bg-white/20 selection:text-white cursor-none`}>
 
 
                 <WeatherOverlay
+                    id="weather-overlay"
                     weatherType={weatherType}
                     windSpeed={currentDisplay.wind}
                     mousePos={mousePos}
@@ -1109,7 +1116,7 @@ export default function App() {
                         </div>
                         <div className="absolute top-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-3 z-40 pointer-events-auto w-full max-w-md">
                             {/* MODE SWITCHER */}
-                            <div className="flex bg-black/40 backdrop-blur-xl rounded-full p-1.5 border border-white/10 shadow-2xl">
+                            <div id="mode-switcher" className="flex bg-black/40 backdrop-blur-xl rounded-full p-1.5 border border-white/10 shadow-2xl">
                                 {['normal', 'dev', 'god'].map((m) => (
                                     <button key={m} onClick={() => setMode(m)} className={`relative px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${mode === m ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>{m}</button>
                                 ))}
@@ -1209,11 +1216,11 @@ export default function App() {
                                                 <span className="text-[10px] uppercase tracking-[0.25em] font-bold text-white/70">{currentDisplay.city}, {currentDisplay.country}</span>
                                             </div>
                                         </div>
-                                        <div className="relative inline-block py-4">
+                                        <div id="main-temp" className="relative inline-block py-4">
                                             <h1 className="text-[20vw] lg:text-[15rem] xl:text-[18rem] leading-[0.8] font-[100] tracking-tighter text-white mix-blend-overlay select-none">{Math.round(currentDisplay.temp)}°</h1>
                                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-white/5 blur-[100px] rounded-full -z-10 pointer-events-none"></div>
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-16 w-full max-w-5xl mx-auto relative z-20">
+                                        <div id="stats-grid" className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-16 w-full max-w-5xl mx-auto relative z-20">
                                             {[{ icon: Wind, value: currentDisplay.wind, unit: 'KM/H', label: 'Wind Velocity' }, { icon: Droplets, value: currentDisplay.humidity, unit: '%', label: 'Humidity' }, { icon: Gauge, value: Math.round(currentDisplay.pressure), unit: 'hPa', label: 'Pressure' }].map((stat, i) => (
                                                 <div key={i} className="flex flex-col items-center justify-center p-8 rounded-[2rem] transition-all duration-500 group w-full border border-transparent hover:bg-white/5 hover:backdrop-blur-md hover:border-white/5">
                                                     <stat.icon size={28} className="text-white/30 mb-4 group-hover:text-white/80 transition-colors" />

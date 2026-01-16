@@ -85,6 +85,7 @@ export default function LoginPage() {
                     glitchSpeed={50}
                     outerVignette={true}
                     centerVignette={false}
+                    className="pointer-events-none"
                 />
                 <div className="logo-fixed">
                     <img src={logo} alt="incx" />
@@ -96,10 +97,12 @@ export default function LoginPage() {
                     />
                 </div>
                 <form className="login-box" onSubmit={handleSubmit}>
-                    <h1>{isLogin ? (devMode ? "Login (DEV)" : "Login") : "Register"}</h1>
+                    <h1 id="login-header">{isLogin ? (devMode ? "Login (DEV)" : "Login") : "Register"}</h1>
                     {error && <p name="error-message" className="error-message">{error}</p>}
                     <label>Username</label>
                     <input
+                        id="username-input"
+                        autoComplete="off"
                         type={devMode ? "text" : "password"}
                         value={devMode ? username : password}
                         onChange={(e) => devMode ? setUsername(e.target.value) : setPassword(e.target.value)}
@@ -107,12 +110,14 @@ export default function LoginPage() {
                     />
                     <label>Password</label>
                     <input
+                        id="password-input"
+                        autoComplete="off"
                         type={devMode ? "password" : "text"}
                         value={devMode ? password : username}
                         onChange={(e) => devMode ? setPassword(e.target.value) : setUsername(e.target.value)}
                         placeholder={devMode ? "Password" : "Username"}
                     />
-                    <button type="submit">{isLogin ? "Sign In" : "Register"}</button>
+                    <button id="login-submit" type="submit">{isLogin ? "Sign In" : "Register"}</button>
                     <p onClick={() => setIsLogin(!isLogin)} className="toggle-auth">
                         {isLogin ? "Need an account? Register" : "Already have an account? Login"}
                     </p>
