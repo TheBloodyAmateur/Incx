@@ -3,7 +3,6 @@ import { RouterProvider } from "react-router-dom";
 import router from "./routes.jsx";
 import "../styles/global.css";
 import { UXProvider } from '../context/UXContext';
-import RandomPopup from '../components/ui/RandomPopup';
 
 // --- GLOBAL CUSTOM CURSOR COMPONENT ---
 const CustomCursor = () => {
@@ -61,7 +60,6 @@ export default function App() {
         <UXProvider>
             <>
                 <CustomCursor />
-                <RandomPopup />
                 <RouterProvider router={router} />
             </>
         </UXProvider>

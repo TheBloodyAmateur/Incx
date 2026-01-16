@@ -1,11 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import './RandomPopup.css';
 
 export default function RandomPopup() {
+    const location = useLocation();
     const [messages, setMessages] = useState([]);
     const [currentMessage, setCurrentMessage] = useState(null);
     const [isVisible, setIsVisible] = useState(false);
     const timeoutRef = useRef(null);
+
+    // Nur auf Seiten nach Login/Landing anzeigen
+    const excludedPaths = ['/', '/login'];
+    const shouldShowPopups = !excludedPaths.includes(location.pathname);
 
     // Lade die Popup-Nachrichten aus der externen Datei
     useEffect(() => {
@@ -21,7 +27,7 @@ export default function RandomPopup() {
     }, []);
 
     const showRandomPopup = () => {
-        if (messages.length === 0) return;
+        if (messages.length === 0 || !shouldShowPopups) return;
         const randomIndex = Math.floor(Math.random() * messages.length);
         setCurrentMessage(messages[randomIndex]);
         setIsVisible(true);
@@ -35,7 +41,7 @@ export default function RandomPopup() {
 
     // Erstes Popup nach 10-30 Sekunden
     useEffect(() => {
-        if (messages.length === 0) return;
+        if (messages.length === 0 || !shouldShowPopups) return;
 
         const initialDelay = 10000 + Math.random() * 20000;
         timeoutRef.current = setTimeout(showRandomPopup, initialDelay);
@@ -43,7 +49,15 @@ export default function RandomPopup() {
         return () => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
         };
-    }, [messages]);
+    }, [messages, shouldShowPopups]);
+
+    // Timer stoppen wenn auf excluded page gewechselt wird
+    useEffect(() => {
+        if (!shouldShowPopups) {
+            setIsVisible(false);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        }
+    }, [shouldShowPopups]);
 
     const handleClose = () => {
         setIsVisible(false);
@@ -51,7 +65,7 @@ export default function RandomPopup() {
         scheduleNextPopup();
     };
 
-    if (!isVisible || !currentMessage) return null;
+    if (!isVisible || !currentMessage || !shouldShowPopups) return null;
 
     return (
         <div className="random-popup-overlay">
