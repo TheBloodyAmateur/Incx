@@ -36,7 +36,7 @@ public class WeatherService {
         Double cloudCover = extractFirst(hourly, "cloudcover");
         Double precipitation = extractFirst(hourly, "precipitation");
 
-        // God-Mode-Overrides anwenden
+        // God-Mode-Overrides
         boolean isGodMode = "god".equalsIgnoreCase(query.viewMode());
 
         if (isGodMode) {
@@ -178,22 +178,22 @@ public class WeatherService {
             return "sun";
         }
 
-        // Schnee: 71, 73, 75, 77, 85, 86
+        // Snow: 71, 73, 75, 77, 85, 86
         if (weatherCode == 71 || weatherCode == 73 || weatherCode == 75 || weatherCode == 77 || weatherCode == 85 || weatherCode == 86) {
             return "snow";
         }
 
-        // Nebel: 45, 48
+        // Fog: 45, 48
         if (weatherCode == 45 || weatherCode == 48) {
             return "fog";
         }
 
-        // Gewitter / Sturm: 95, 96, 99 oder sehr hoher Wind
+        // Thunderstorm / Storm: 95, 96, 99 or very high wind
         if (weatherCode == 95 || weatherCode == 96 || weatherCode == 99 || (windSpeed != null && windSpeed >= 70)) {
             return "storm";
         }
 
-        // Regen / Niesel / Schauer: 51–57, 61–67, 80–82 oder merkbarer Niederschlag
+        // Rain / Drizzle / Showers: 51–57, 61–67, 80–82
         if (weatherCode == 51 || weatherCode == 53 || weatherCode == 55 || weatherCode == 56 || weatherCode == 57
                 || weatherCode == 61 || weatherCode == 63 || weatherCode == 65 || weatherCode == 66 || weatherCode == 67
                 || weatherCode == 80 || weatherCode == 81 || weatherCode == 82
@@ -204,12 +204,12 @@ public class WeatherService {
             return "rain";
         }
 
-        // Starker Wind ohne Gewitter
+        // Strong wind without thunderstorm
         if (windSpeed != null && windSpeed >= 35) {
             return "wind";
         }
 
-        // Bedeckt, aber sonst ruhig
+        // Cloudy
         if (cloudCover != null && cloudCover > 80) {
             return "sun";
         }

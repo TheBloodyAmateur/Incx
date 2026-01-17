@@ -2,16 +2,15 @@ import { useEffect } from 'react';
 import { useUX } from '../context/UXContext';
 
 /**
- * Dieser Hook automatisiert das Highlighting.
- * Er sucht im DOM nach Elementen, deren 'name' oder 'id' Attribut
- * mit einem Eintrag in 'currentImprovements' übereinstimmt.
+ * This hook automates the highlighting.
+ * It searches the DOM for elements whose 'name' or 'id' attribute matches an entry in 'currentImprovements'.
  */
 export const useUXAutoWiring = (containerRef) => {
-  const { 
-    currentImprovements, 
-    hoverModeActive, 
-    highlightedId, 
-    setHighlight 
+  const {
+    currentImprovements,
+    hoverModeActive,
+    highlightedId,
+    setHighlight
   } = useUX();
 
 
@@ -27,13 +26,13 @@ export const useUXAutoWiring = (containerRef) => {
       if (!target) return;
 
       const identifier = target.getAttribute('name') || target.getAttribute('id');
-      
-  
+
+
       const hasImprovement = currentImprovements.some(item => item.uiName === identifier);
 
       if (hasImprovement) {
         setHighlight(identifier);
-        e.stopPropagation(); 
+        e.stopPropagation();
       }
     };
 
@@ -43,7 +42,7 @@ export const useUXAutoWiring = (containerRef) => {
       }
     };
 
-  
+
     container.addEventListener('mouseover', handleMouseOver);
     container.addEventListener('mouseout', handleMouseOut);
 

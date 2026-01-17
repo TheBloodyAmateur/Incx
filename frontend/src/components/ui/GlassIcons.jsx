@@ -20,18 +20,18 @@ const gradientMapping = {
 };
 
 export default function GlassIcons({ items, className }) {
-    // State für Button-Positionen und Sprungzähler
+    // State for button positions and jump counter
     const [buttonStates, setButtonStates] = useState(() =>
         items.map(() => ({
             position: { x: 0, y: 0 },
             jumpCount: 0,
-            maxJumps: Math.floor(Math.random() * 3) + 1 // 1-3 Sprünge
+            maxJumps: Math.floor(Math.random() * 3) + 1 // 1-3 jumps
         }))
     );
 
     const containerRef = useRef(null);
 
-    // Reset bei neuem Mount (Dashboard-Besuch)
+    // Reset on new mount (Dashboard visit)
     useEffect(() => {
         setButtonStates(items.map(() => ({
             position: { x: 0, y: 0 },
@@ -52,7 +52,7 @@ export default function GlassIcons({ items, className }) {
             const newStates = [...prev];
             const currentState = newStates[index];
 
-            // Wenn geklickt wurde und Sprünge aufgebraucht sind -> Navigation
+            // If clicked and jumps are used up -> Navigation
             if (isClick && currentState.jumpCount >= currentState.maxJumps) {
                 if (originalOnClick) {
                     originalOnClick();
@@ -60,12 +60,12 @@ export default function GlassIcons({ items, className }) {
                 return prev;
             }
 
-            // Wenn Hover (oder verfrühter Klick) und noch Sprünge übrig sind -> Wegspringen
+            // If Hover (or early click) and jumps are still available -> Jump away
             if ((!isClick || currentState.jumpCount < currentState.maxJumps) && currentState.jumpCount < currentState.maxJumps) {
-                // Button springt weg - zufällige Position basierend auf Viewport
-                // Bewegung in alle Richtungen: horizontal, vertikal und diagonal
-                const rangeX = 700; // max 700px nach links oder rechts
-                const rangeY = 250; // max 250px nach oben oder unten (bleibt sichtbar)
+                // Button jumps away - random position based on viewport
+                // Movement in all directions: horizontal, vertical and diagonal
+                const rangeX = 700; // max 700px left or right
+                const rangeY = 250; // max 250px up or down (stays visible)
 
                 const newX = (Math.random() - 0.5) * 2 * rangeX;
                 const newY = (Math.random() - 0.5) * 2 * rangeY;

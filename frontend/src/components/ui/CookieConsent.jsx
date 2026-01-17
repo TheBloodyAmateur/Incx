@@ -8,7 +8,7 @@ export default function CookieConsent() {
     const location = useLocation();
 
     useEffect(() => {
-        // INCONVENIENCE MODE: Always show on every route change.
+        // Always show on every route change.
         // Never remember the choice.
         setShow(true);
         console.log("Inconvenience Cookie Banner: RESETting to visible");
@@ -22,7 +22,7 @@ export default function CookieConsent() {
     const handleDecline = () => {
         // Fake decline - doesn't save anything
         setShow(false);
-        // If declining on internal page, kick to login (still enforcing the 'rule')
+        // If declining on internal page, back to login
         if (location.pathname !== '/') {
             navigate("/");
         }

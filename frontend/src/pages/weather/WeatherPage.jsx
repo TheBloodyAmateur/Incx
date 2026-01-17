@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Search, MapPin, Droplets, Zap, Activity, Volume2, VolumeX, X, Gauge, Map as MapIcon, ArrowRight, Settings2, Home, CloudFog, WifiOff } from 'lucide-react';
+import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Search, MapPin, Droplets, Zap, Activity, X, Gauge, Map as MapIcon, ArrowRight, Settings2, Home, CloudFog, WifiOff } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useWeather } from '../../context/WeatherContext';
 import { useUX } from '../../context/UXContext';
@@ -19,45 +19,7 @@ const getWeatherType = (code) => {
     return 'clear';
 };
 
-// --- AUDIO ENGINE ---
-const playThunderSound = () => {
-    try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
 
-        const ctx = new AudioContext();
-        const t = ctx.currentTime;
-
-        const bufferSize = ctx.sampleRate * 2;
-        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
-        }
-
-        const noise = ctx.createBufferSource();
-        noise.buffer = buffer;
-
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(800, t);
-        filter.frequency.exponentialRampToValueAtTime(100, t + 1.5);
-
-        const gain = ctx.createGain();
-        gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(0.8, t + 0.1);
-        gain.gain.exponentialRampToValueAtTime(0.01, t + 2);
-
-        noise.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-        noise.start(t);
-
-        setTimeout(() => ctx.close(), 2500);
-    } catch (e) {
-        console.error("Audio error:", e);
-    }
-};
 
 import ImprovementWrapper from '../../components/imp/ImprovementWrapper';
 
@@ -79,8 +41,8 @@ const DraggableCloud = ({ initialX, initialY, scale, opacity }) => {
                 const dy = initialY - currentPos.current.y;
 
                 if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
-                    currentPos.current.x += dx * 0.0005; // Much slower return
-                    currentPos.current.y += dy * 0.0005;
+                    currentPos.current.x += dx * 0.001; // Much slower return
+                    currentPos.current.y += dy * 0.001;
                     setPos({ ...currentPos.current });
                 }
             }
@@ -278,7 +240,7 @@ const ForecastGraph = ({ data }) => {
     );
 };
 
-const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled, windDirection = { x: 1, y: 0 }, lastThunderTime }) => {
+const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, windDirection = { x: 1, y: 0 }, lastThunderTime }) => {
     if (!active) return null;
 
     const isWindy = windSpeed > 20;
@@ -318,7 +280,6 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
 
         // 1. First main flash
         setShowFlash(true);
-        if (soundEnabled) playThunderSound();
         const t1 = setTimeout(() => setShowFlash(false), 80);
 
         // 2. Second main flash
@@ -345,7 +306,7 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
             clearTimeout(t3);
             clearTimeout(t4);
         };
-    }, [lastThunderTime, isThunder, soundEnabled]);
+    }, [lastThunderTime, isThunder]);
 
     // Rain particles with staggered starts (negative delays so animation is already in progress)
     const rainParticles = useMemo(() => [...Array(400)].map((_, i) => ({
@@ -603,7 +564,6 @@ export default function App() {
     const [error, setError] = useState(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const [isGodMinimized, setIsGodMinimized] = useState(false);
-    const [soundEnabled, setSoundEnabled] = useState(false);
     const [showSearch, setShowSearch] = useState(true);
     const [apiStatus, setApiStatus] = useState('checking'); // checking, online, offline
 
@@ -645,8 +605,6 @@ export default function App() {
             console.error("API Health Check Failed:", e);
             setApiStatus('offline');
             setShowOfflineDialog(true);
-            // setMode('god'); // Removed auto-switch
-            // setGodOverride(prev => ({ ...prev, active: true, weatherCode: 95 })); 
         }
     }, [setMode]);
 
@@ -776,7 +734,6 @@ export default function App() {
                 // Rotate based on length
                 return { transform: `rotate(${delayedValue.length * 5}deg)` };
             case 'INVERSE':
-                // Just CSS mirror? Or text manipulation? Let's do CSS mirror
                 return { transform: 'scaleX(-1)' };
             case 'SHUFFLE':
                 return {}; // Logic handled in text rendering
@@ -826,7 +783,7 @@ export default function App() {
         return () => window.removeEventListener('mousemove', handleMouseMove);
     }, []);
 
-    // Cloud Logic (Moved to Main Flow)
+    // Cloud Logic
     const [clouds, setClouds] = useState([]);
     useEffect(() => {
         const c = [];
@@ -925,7 +882,7 @@ export default function App() {
     const weatherType = getWeatherType(currentDisplay.code);
     const isEffectsActive = mode !== 'dev';
 
-    // Trigger thunder periodically (Must be after weatherType definition)
+    // Trigger thunder periodically
     useEffect(() => {
         if (weatherType !== 'thunder') return;
 
@@ -1093,7 +1050,7 @@ export default function App() {
                     windSpeed={currentDisplay.wind}
                     mousePos={mousePos}
                     active={isEffectsActive && (weatherData || godOverride.active)}
-                    soundEnabled={soundEnabled}
+
                     windDirection={windDirection}
                     lastThunderTime={lastThunderTime}
                 />
@@ -1142,7 +1099,7 @@ export default function App() {
                             )}
                         </div>
 
-                        {/* TOP RIGHT - REMOVED OLD SEARCH */}
+                        {/* TOP RIGHT */}
                     </div>
 
                     <div className={`flex-1 flex flex-col items-center justify-start pt-12 relative z-10 w-full max-w-[1400px] mx-auto px-6 pb-20`}>
@@ -1190,7 +1147,6 @@ export default function App() {
                                                         onClick={(e) => {
                                                             e.stopPropagation(); // Prevent search submission if bubbling?
                                                             cyclePrankEffect();
-                                                            // Maybe jump input away too? Or just cycle. 
                                                         }}
                                                         className="px-6 py-4 hover:bg-white/10 cursor-pointer border-b border-white/5 last:border-0 flex items-center gap-3 group/item transition-colors"
                                                     >

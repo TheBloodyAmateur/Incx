@@ -9,11 +9,11 @@ export default function RandomPopup() {
     const [isVisible, setIsVisible] = useState(false);
     const timeoutRef = useRef(null);
 
-    // Nur auf Seiten nach Login/Landing anzeigen
+    // Only show on pages after login/landing
     const excludedPaths = ['/', '/login'];
     const shouldShowPopups = !excludedPaths.includes(location.pathname);
 
-    // Lade die Popup-Nachrichten aus der externen Datei
+    // Load the popup messages from the external file
     useEffect(() => {
         fetch('/random-popups.txt')
             .then(response => response.text())
@@ -34,12 +34,12 @@ export default function RandomPopup() {
     };
 
     const scheduleNextPopup = () => {
-        // Nächstes Popup nach 20-40 Sekunden
+        // Next popup after 20-40 seconds
         const delay = 20000 + Math.random() * 20000;
         timeoutRef.current = setTimeout(showRandomPopup, delay);
     };
 
-    // Erstes Popup nach 10-30 Sekunden
+    // First popup after 10-30 seconds
     useEffect(() => {
         if (messages.length === 0 || !shouldShowPopups) return;
 
@@ -51,7 +51,7 @@ export default function RandomPopup() {
         };
     }, [messages, shouldShowPopups]);
 
-    // Timer stoppen wenn auf excluded page gewechselt wird
+    // Stop timer when switching to excluded page
     useEffect(() => {
         if (!shouldShowPopups) {
             setIsVisible(false);
@@ -61,7 +61,7 @@ export default function RandomPopup() {
 
     const handleClose = () => {
         setIsVisible(false);
-        // Nach dem Schließen: nächstes Popup in 20-40 Sekunden planen
+        // After closing: schedule next popup in 20-40 seconds
         scheduleNextPopup();
     };
 

@@ -266,7 +266,7 @@ const WeatherCursor = () => {
         let styles = {};
         let classes = "fixed top-0 left-0 w-8 h-8 border rounded-full pointer-events-none z-[999999] transition-all duration-75 ease-out will-change-transform";
 
-        // Thunder flash - EXTREMELY BRIGHT
+        // Thunder flash - bright
         if (thunderFlash) {
             classes += " border-white bg-white scale-[2]";
             styles.boxShadow = "0 0 80px 30px rgba(255, 255, 255, 1), 0 0 150px 60px rgba(255, 255, 255, 0.9), 0 0 200px 80px rgba(255, 255, 200, 0.7)";

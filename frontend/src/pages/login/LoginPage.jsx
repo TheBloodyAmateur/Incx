@@ -23,7 +23,7 @@ export default function LoginPage() {
     const [showForgotGames, setShowForgotGames] = useState(false);
     const navigate = useNavigate();
 
-    // Lade die kryptischen Fehlermeldungen aus der externen Datei
+    // Load the cryptic error messages from the external file
     useEffect(() => {
         fetch('/error-messages.txt')
             .then(response => response.text())
@@ -32,15 +32,15 @@ export default function LoginPage() {
                 setCrypticMessages(messages);
             })
             .catch(err => {
-                console.error('Fehler beim Laden der Fehlermeldungen:', err);
-                // Fallback falls Datei nicht geladen werden kann
-                setCrypticMessages(["Ein unbekannter Fehler ist aufgetreten."]);
+                console.error('Error loading error messages:', err);
+                // Fallback if file cannot be loaded
+                setCrypticMessages(["An unknown error occurred."]);
             });
     }, []);
 
     const getRandomCrypticError = () => {
         if (crypticMessages.length === 0) {
-            return "Ein mysteriöser Fehler ist aufgetreten.";
+            return "An unknown error occurred.";
         }
         const randomIndex = Math.floor(Math.random() * crypticMessages.length);
         return crypticMessages[randomIndex];
@@ -62,12 +62,12 @@ export default function LoginPage() {
             if (response.ok) {
                 navigate(`/dashboard?username=${username}`);
             } else {
-                // Zeige eine zufällige kryptische Fehlermeldung statt der echten
+                // Show a random cryptic error message instead of the real one
                 setError(getRandomCrypticError());
             }
         } catch (error) {
             console.error("Error during authentication:", error);
-            // Auch bei Netzwerkfehlern eine lustige Meldung zeigen
+            // Show a funny message even for network errors
             setError(getRandomCrypticError());
         }
     };

@@ -10,7 +10,7 @@ COPY . .
 
 RUN npm run build
 
-# Run-Stage mit Nginx als Static-Server + API-Proxy
+# Run-Stage mit Nginx als Static-Server + API-Proxy 
 FROM nginx:1.27-alpine
 
 # Statisches Bundle aus der Build-Stage kopieren

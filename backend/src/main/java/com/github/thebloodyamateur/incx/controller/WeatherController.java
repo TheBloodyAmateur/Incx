@@ -33,7 +33,6 @@ public class WeatherController {
             @RequestParam(name = "precipitation", required = false) Double precipitationOverride,
             @RequestParam(name = "weatherMode", required = false) String weatherModeOverride
     ) {
-        // Fallback auf Berlin, wenn keine Koordinaten & kein Name angegeben
         double effectiveLat = latitude != null ? latitude : 52.52;
         double effectiveLon = longitude != null ? longitude : 13.41;
 
