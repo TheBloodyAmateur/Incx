@@ -1,4 +1,4 @@
-.cookie-overlay {
+.consent-banner-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -23,7 +23,7 @@
     }
 }
 
-.cookie-modal {
+.consent-banner-modal {
     background: linear-gradient(135deg, rgba(30, 30, 50, 0.9), rgba(20, 20, 35, 0.95));
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px;
@@ -49,7 +49,7 @@
     }
 }
 
-.cookie-icon {
+.consent-banner-icon {
     font-size: 64px;
     margin-bottom: 20px;
     animation: bounce 2s infinite;
@@ -67,7 +67,7 @@
     }
 }
 
-.cookie-modal h2 {
+.consent-banner-modal h2 {
     font-size: 28px;
     font-weight: 700;
     margin-bottom: 15px;
@@ -77,20 +77,20 @@
     background-clip: text;
 }
 
-.cookie-modal p {
+.consent-banner-modal p {
     color: rgba(255, 255, 255, 0.7);
     font-size: 15px;
     line-height: 1.6;
     margin-bottom: 30px;
 }
 
-.cookie-buttons {
+.consent-banner-buttons {
     display: flex;
     gap: 15px;
     justify-content: center;
 }
 
-.cookie-btn {
+.consent-banner-btn {
     padding: 14px 32px;
     border-radius: 12px;
     font-size: 15px;
@@ -100,32 +100,32 @@
     cursor: pointer;
 }
 
-.cookie-btn-accept {
+.consent-banner-btn-accept {
     background: linear-gradient(135deg, #3A2F66, #2E4A7F);
     color: white;
     box-shadow: 0 4px 15px rgba(58, 47, 102, 0.4);
 }
 
-.cookie-btn-accept:hover {
+.consent-banner-btn-accept:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(58, 47, 102, 0.6);
     background: linear-gradient(135deg, #4a3f76, #3E5A8F);
 }
 
-.cookie-btn-decline {
+.consent-banner-btn-decline {
     background: rgba(255, 255, 255, 0.05);
     color: rgba(255, 255, 255, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.cookie-btn-decline:hover {
+.consent-banner-btn-decline:hover {
     background: rgba(255, 70, 70, 0.2);
     border-color: rgba(255, 70, 70, 0.4);
     color: #ff6666;
     transform: translateY(-2px);
 }
 
-.cookie-fine-print {
+.consent-banner-fine-print {
     margin-top: 20px;
     font-size: 12px;
     color: rgba(255, 255, 255, 0.4);

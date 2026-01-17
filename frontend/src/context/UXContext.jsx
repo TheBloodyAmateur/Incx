@@ -15,6 +15,16 @@ export const UXProvider = ({ children }) => {
     const [hoverModeActive, setHoverModeActive] = useState(false);
     const [highlightedId, setHighlightedId] = useState(null);
 
+    // Disclaimer State
+    const [disclaimerAccepted, setDisclaimerAccepted] = useState(() => {
+        return sessionStorage.getItem("incx_disclaimer_accepted") === "true";
+    });
+
+    const acceptDisclaimer = useCallback(() => {
+        setDisclaimerAccepted(true);
+        sessionStorage.setItem("incx_disclaimer_accepted", "true");
+    }, []);
+
 
     const loadImprovementsForPage = useCallback(async (pageName) => {
         setLoading(true);
@@ -79,7 +89,9 @@ export const UXProvider = ({ children }) => {
         hoverModeActive,
         toggleHoverMode,
         highlightedId,
-        setHighlight
+        setHighlight,
+        disclaimerAccepted,
+        acceptDisclaimer
     };
 
     return (

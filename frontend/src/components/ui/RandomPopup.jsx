@@ -1,13 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import './RandomPopup.css';
 
 export default function RandomPopup() {
+    const location = useLocation();
     const [messages, setMessages] = useState([]);
     const [currentMessage, setCurrentMessage] = useState(null);
     const [isVisible, setIsVisible] = useState(false);
     const timeoutRef = useRef(null);
 
-    // Lade die Popup-Nachrichten aus der externen Datei
+    // Only show on pages after login/landing
+    const excludedPaths = ['/', '/login'];
+    const shouldShowPopups = !excludedPaths.includes(location.pathname);
+
+    // Load the popup messages from the external file
     useEffect(() => {
         fetch('/random-popups.txt')
             .then(response => response.text())
@@ -21,21 +27,21 @@ export default function RandomPopup() {
     }, []);
 
     const showRandomPopup = () => {
-        if (messages.length === 0) return;
+        if (messages.length === 0 || !shouldShowPopups) return;
         const randomIndex = Math.floor(Math.random() * messages.length);
         setCurrentMessage(messages[randomIndex]);
         setIsVisible(true);
     };
 
     const scheduleNextPopup = () => {
-        // Nächstes Popup nach 20-40 Sekunden
+        // Next popup after 20-40 seconds
         const delay = 20000 + Math.random() * 20000;
         timeoutRef.current = setTimeout(showRandomPopup, delay);
     };
 
-    // Erstes Popup nach 10-30 Sekunden
+    // First popup after 10-30 seconds
     useEffect(() => {
-        if (messages.length === 0) return;
+        if (messages.length === 0 || !shouldShowPopups) return;
 
         const initialDelay = 10000 + Math.random() * 20000;
         timeoutRef.current = setTimeout(showRandomPopup, initialDelay);
@@ -43,15 +49,23 @@ export default function RandomPopup() {
         return () => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
         };
-    }, [messages]);
+    }, [messages, shouldShowPopups]);
+
+    // Stop timer when switching to excluded page
+    useEffect(() => {
+        if (!shouldShowPopups) {
+            setIsVisible(false);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        }
+    }, [shouldShowPopups]);
 
     const handleClose = () => {
         setIsVisible(false);
-        // Nach dem Schließen: nächstes Popup in 20-40 Sekunden planen
+        // After closing: schedule next popup in 20-40 seconds
         scheduleNextPopup();
     };
 
-    if (!isVisible || !currentMessage) return null;
+    if (!isVisible || !currentMessage || !shouldShowPopups) return null;
 
     return (
         <div className="random-popup-overlay">

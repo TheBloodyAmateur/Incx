@@ -8,35 +8,21 @@ export default function CookieConsent() {
     const location = useLocation();
 
     useEffect(() => {
-        const consent = localStorage.getItem('cookieConsent');
-
-        if (location.pathname === '/') {
-            // Login Page: Only show if no decision made yet
-            if (consent === 'rejected' || consent === 'accepted') {
-                setShow(false);
-            } else {
-                setShow(true);
-            }
-        } else {
-            // Internal Pages: Show if not explicitly accepted
-            if (consent === 'accepted') {
-                setShow(false);
-            } else {
-                setShow(true);
-            }
-        }
+        // Always show on every route change.
+        // Never remember the choice.
+        setShow(true);
+        console.log("Inconvenience Cookie Banner: RESETting to visible");
     }, [location.pathname]);
 
     const handleAccept = () => {
-        localStorage.setItem('cookieConsent', 'accepted');
+        // Fake accept - doesn't save anything
         setShow(false);
     };
 
     const handleDecline = () => {
-        localStorage.setItem('cookieConsent', 'rejected');
+        // Fake decline - doesn't save anything
         setShow(false);
-        // If declining on internal page, kick to login.
-        // If already on login, stay there (and popup hides).
+        // If declining on internal page, back to login
         if (location.pathname !== '/') {
             navigate("/");
         }
@@ -47,24 +33,24 @@ export default function CookieConsent() {
     }
 
     return (
-        <div className="cookie-overlay">
-            <div className="cookie-modal">
-                <div className="cookie-icon">🍪</div>
+        <div className="consent-banner-overlay">
+            <div className="consent-banner-modal">
+                <div className="consent-banner-icon">🍪</div>
                 <h2>Cookie-Zustimmung erforderlich</h2>
                 <p>
                     Diese Website verwendet Cookies, um Ihre Erfahrung zu verbessern.
                     Bitte akzeptieren Sie unsere Cookie-Richtlinie, um fortzufahren.
                     Ohne Ihre Zustimmung können Sie die Website nicht nutzen.
                 </p>
-                <div className="cookie-buttons">
+                <div className="consent-banner-buttons">
                     <button
-                        className="cookie-btn cookie-btn-accept"
+                        className="consent-banner-btn consent-banner-btn-accept"
                         onClick={handleAccept}
                     >
                         Akzeptieren
                     </button>
                     <button
-                        className="cookie-btn cookie-btn-decline"
+                        className="consent-banner-btn consent-banner-btn-decline"
                         onClick={handleDecline}
                     >
                         Ablehnen

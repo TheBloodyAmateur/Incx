@@ -38,11 +38,12 @@
 }
 
 .login-box {
-    z-index: 10;
+    position: relative;
+    z-index: 50;
     backdrop-filter: blur(20px);
     padding: 40px;
     border-radius: 16px;
-    background: rgba(255,255,255,0.06);
+    background: rgba(255, 255, 255, 0.06);
     color: white;
     min-width: 340px;
     display: flex;

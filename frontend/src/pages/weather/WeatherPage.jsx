@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Search, MapPin, Droplets, Zap, Activity, Volume2, VolumeX, X, Gauge, Map as MapIcon, ArrowRight, Settings2, Home, CloudFog } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Search, MapPin, Droplets, Zap, Activity, X, Gauge, Map as MapIcon, ArrowRight, Settings2, Home, CloudFog, WifiOff } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useWeather } from '../../context/WeatherContext';
+import { useUX } from '../../context/UXContext';
 
 // --- UTILS & CONFIG ---
 
@@ -17,45 +19,7 @@ const getWeatherType = (code) => {
     return 'clear';
 };
 
-// --- AUDIO ENGINE ---
-const playThunderSound = () => {
-    try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
 
-        const ctx = new AudioContext();
-        const t = ctx.currentTime;
-
-        const bufferSize = ctx.sampleRate * 2;
-        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
-        }
-
-        const noise = ctx.createBufferSource();
-        noise.buffer = buffer;
-
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(800, t);
-        filter.frequency.exponentialRampToValueAtTime(100, t + 1.5);
-
-        const gain = ctx.createGain();
-        gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(0.8, t + 0.1);
-        gain.gain.exponentialRampToValueAtTime(0.01, t + 2);
-
-        noise.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-        noise.start(t);
-
-        setTimeout(() => ctx.close(), 2500);
-    } catch (e) {
-        console.error("Audio error:", e);
-    }
-};
 
 import ImprovementWrapper from '../../components/imp/ImprovementWrapper';
 
@@ -77,8 +41,8 @@ const DraggableCloud = ({ initialX, initialY, scale, opacity }) => {
                 const dy = initialY - currentPos.current.y;
 
                 if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
-                    currentPos.current.x += dx * 0.0005; // Much slower return
-                    currentPos.current.y += dy * 0.0005;
+                    currentPos.current.x += dx * 0.001; // Much slower return
+                    currentPos.current.y += dy * 0.001;
                     setPos({ ...currentPos.current });
                 }
             }
@@ -144,45 +108,6 @@ const DraggableCloud = ({ initialX, initialY, scale, opacity }) => {
     );
 };
 
-const CustomCursor = () => {
-    const cursorRef = useRef(null);
-    const dotRef = useRef(null);
-
-    useEffect(() => {
-        const moveCursor = (e) => {
-            if (cursorRef.current) {
-                cursorRef.current.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) translate(-50%, -50%)`;
-            }
-            if (dotRef.current) {
-                dotRef.current.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) translate(-50%, -50%)`;
-            }
-        };
-
-        const clickEffect = () => {
-            if (cursorRef.current) {
-                cursorRef.current.classList.add('scale-75');
-                setTimeout(() => {
-                    if (cursorRef.current) cursorRef.current.classList.remove('scale-75');
-                }, 150);
-            }
-        };
-
-        window.addEventListener('mousemove', moveCursor);
-        window.addEventListener('mousedown', clickEffect);
-
-        return () => {
-            window.removeEventListener('mousemove', moveCursor);
-            window.removeEventListener('mousedown', clickEffect);
-        };
-    }, []);
-
-    return (
-        <>
-            <div ref={cursorRef} className="fixed top-0 left-0 w-8 h-8 border border-white rounded-full pointer-events-none z-[9999] mix-blend-difference transition-transform duration-150 ease-out will-change-transform" />
-            <div ref={dotRef} className="fixed top-0 left-0 w-1 h-1 bg-white rounded-full pointer-events-none z-[9999] mix-blend-difference will-change-transform" />
-        </>
-    );
-};
 
 const LocationMap = ({ lat, lon }) => {
     if (!lat || !lon) return null;
@@ -315,76 +240,163 @@ const ForecastGraph = ({ data }) => {
     );
 };
 
-const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled }) => {
+const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, windDirection = { x: 1, y: 0 }, lastThunderTime }) => {
     if (!active) return null;
 
     const isWindy = windSpeed > 20;
     const isThunder = weatherType === 'thunder';
     const isSunny = weatherType === 'clear';
 
-    useEffect(() => {
-        if (isThunder && soundEnabled) {
-            const interval = setInterval(() => { if (Math.random() > 0.7) playThunderSound(); }, 4000);
-            return () => clearInterval(interval);
-        }
-    }, [isThunder, soundEnabled]);
+    // Smooth wind angle transition using state
+    const [displayAngle, setDisplayAngle] = useState(0);
+    const targetAngle = Math.atan2(windDirection.y, windDirection.x) * (180 / Math.PI);
 
-    const rainParticles = useMemo(() => [...Array(300)].map((_, i) => ({
+    // Smoothly interpolate to target angle
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setDisplayAngle(prev => {
+                const diff = targetAngle - prev;
+                // Handle angle wrapping
+                const shortestDiff = ((diff + 180) % 360) - 180;
+                if (Math.abs(shortestDiff) < 1) return targetAngle;
+                return prev + shortestDiff * 0.1;
+            });
+        }, 16);
+        return () => clearInterval(interval);
+    }, [targetAngle]);
+
+    // Thunder flash state (controlled via prop)
+    const [showFlash, setShowFlash] = useState(false);
+
+    useEffect(() => {
+        if (!isThunder || !lastThunderTime) {
+            setShowFlash(false);
+            return;
+        }
+
+        // New Sequence:
+        // Main Strike: Flash (80ms) -> Gap (50ms) -> Flash (80ms)
+        // After-Flashes: Gap (150ms) -> Flash (50ms) -> Gap (50ms) -> Flash (50ms)
+
+        // 1. First main flash
+        setShowFlash(true);
+        const t1 = setTimeout(() => setShowFlash(false), 80);
+
+        // 2. Second main flash
+        const t2 = setTimeout(() => {
+            setShowFlash(true);
+            setTimeout(() => setShowFlash(false), 80);
+        }, 130); // 80 + 50 gap
+
+        // 3. After-flash 1
+        const t3 = setTimeout(() => {
+            setShowFlash(true);
+            setTimeout(() => setShowFlash(false), 40);
+        }, 360); // 130 + 80 + 150 gap
+
+        // 4. After-flash 2
+        const t4 = setTimeout(() => {
+            setShowFlash(true);
+            setTimeout(() => setShowFlash(false), 40);
+        }, 450); // 360 + 40 + 50 gap
+
+        return () => {
+            clearTimeout(t1);
+            clearTimeout(t2);
+            clearTimeout(t3);
+            clearTimeout(t4);
+        };
+    }, [lastThunderTime, isThunder]);
+
+    // Rain particles with staggered starts (negative delays so animation is already in progress)
+    const rainParticles = useMemo(() => [...Array(400)].map((_, i) => ({
         id: i,
-        left: Math.random() * 100,
+        left: Math.random() * 150 - 25, // -25% to 125% for full coverage when rotated
+        top: Math.random() * 100, // Random starting positions along the fall
         duration: 0.3 + Math.random() * 0.2,
-        delay: Math.random() * 2
+        delay: -(Math.random() * 2) // Negative delay = already in progress
     })), []);
 
-    // Bigger, more visible snow particles
+    // Snow particles with staggered starts
     const snowParticles = useMemo(() => [...Array(200)].map((_, i) => ({
         id: i,
-        left: Math.random() * 100,
-        duration: 2 + Math.random() * 4, // Faster fall
-        delay: Math.random() * 2,
-        size: 8 + Math.random() * 8 // Bigger flakes
+        left: Math.random() * 150 - 25,
+        top: Math.random() * 100,
+        duration: 2 + Math.random() * 4,
+        delay: -(Math.random() * 4),
+        size: 8 + Math.random() * 8
     })), []);
 
+    // Wind particles with staggered starts
     const windParticles = useMemo(() => [...Array(30)].map((_, i) => ({
         id: i,
         top: Math.random() * 100,
+        left: Math.random() * 100,
         duration: 0.4 + Math.random(),
-        delay: Math.random() * 2
+        delay: -(Math.random() * 2)
     })), []);
-
-
 
     // Effect Conditions
     const showRain = weatherType === 'rain' || weatherType === 'thunder';
-    const showThunderFlash = weatherType === 'thunder';
     const showWind = isWindy || weatherType === 'thunder';
     const showSnow = weatherType === 'snow';
 
     return (
-        <div className={`fixed inset-0 pointer-events-none z-20 overflow-hidden ${showThunderFlash ? 'animate-shake-wind' : ''}`}>
+        <div className="fixed inset-0 pointer-events-none z-20 overflow-hidden">
 
-            {/* SUN GLARE */}
+            {/* SUN GLARE - BLINDING MODE */}
             {isSunny && (
-                <div className="absolute top-[-20%] left-[-20%] w-[150vw] h-[150vh] z-[15] pointer-events-none mix-blend-screen opacity-60 animate-pulse-slow"
-                    style={{
-                        background: 'radial-gradient(circle at 80% 20%, rgba(255,255,200,0.8) 0%, rgba(255,200,100,0.4) 20%, transparent 60%)'
-                    }}
-                ></div>
+                <div className="absolute inset-0 z-[100] pointer-events-none">
+                    {/* 1. Global Washout (Overexposure) - Reduces contrast of the whole app */}
+                    <div className="absolute inset-0 bg-white/10 mix-blend-screen pointer-events-none"></div>
+
+                    {/* 2. Deep Atmosphere Glow (Overlay) - Warms everything up violently */}
+                    <div className="absolute top-[-40%] right-[-20%] w-[150vw] h-[150vw] pointer-events-none mix-blend-overlay opacity-80"
+                        style={{ background: 'radial-gradient(circle, rgba(255,200,50,0.6) 0%, rgba(255,100,0,0.2) 40%, transparent 70%)', filter: 'blur(60px)' }}></div>
+
+                    {/* 3. THE SUN (Screen) - Pure blinding white source */}
+                    <div className="absolute top-[-20%] right-[-20%] w-[100vw] h-[100vw] pointer-events-none mix-blend-screen opacity-100 animate-pulse-slow"
+                        style={{ background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,240,0.8) 20%, rgba(255,220,150,0.5) 40%, transparent 70%)', filter: 'blur(40px)' }}></div>
+
+                    {/* Dynamic Lens Flare Elements (Parallax) */}
+                    <div
+                        className="absolute w-48 h-48 bg-white/20 rounded-full blur-3xl pointer-events-none mix-blend-screen transition-transform duration-75 ease-out"
+                        style={{
+                            left: '50%',
+                            top: '50%',
+                            transform: `translate(${mousePos.x * -0.05}px, ${mousePos.y * -0.05}px)`
+                        }}
+                    ></div>
+                    <div
+                        className="absolute w-24 h-24 bg-amber-100/40 rounded-full blur-2xl pointer-events-none mix-blend-screen transition-transform duration-100 ease-out"
+                        style={{
+                            left: '60%',
+                            top: '40%',
+                            transform: `translate(${mousePos.x * -0.08}px, ${mousePos.y * -0.08}px)`
+                        }}
+                    ></div>
+                </div>
             )}
 
-            {/* CLOUDS */}
-
-
-            {/* RAIN */}
             {showRain && (
-                <div className="absolute inset-0 z-[60]">
+                <div
+                    className="absolute z-[60] transition-transform duration-500 ease-out"
+                    style={{
+                        top: '-50%',
+                        left: '-50%',
+                        width: '200%',
+                        height: '200%',
+                        transform: `rotate(${isWindy ? windDirection.x * 15 : 0}deg)`,
+                        transformOrigin: 'center center'
+                    }}
+                >
                     {rainParticles.map((p) => (
                         <div
                             key={p.id}
-                            className="absolute bg-blue-300/70 w-[2px] h-32 rounded-full animate-fall"
+                            className="absolute bg-blue-300/70 w-[2px] h-24 rounded-full animate-fall"
                             style={{
                                 left: `${p.left}%`,
-                                top: '-150px',
+                                top: `${p.top}%`,
                                 animationDuration: `${p.duration}s`,
                                 animationDelay: `${p.delay}s`
                             }}
@@ -393,9 +405,19 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
                 </div>
             )}
 
-            {/* SNOW */}
+            {/* SNOW - Larger container for full coverage */}
             {showSnow && (
-                <div className="absolute inset-0 z-[80]">
+                <div
+                    className="absolute z-[80] transition-transform duration-500 ease-out"
+                    style={{
+                        top: '-50%',
+                        left: '-50%',
+                        width: '200%',
+                        height: '200%',
+                        transform: `rotate(${isWindy ? windDirection.x * 15 : 0}deg)`,
+                        transformOrigin: 'center center'
+                    }}
+                >
                     {snowParticles.map((p) => (
                         <div
                             key={p.id}
@@ -403,7 +425,7 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
                             style={{
                                 width: `${p.size}px`, height: `${p.size}px`,
                                 left: `${p.left}%`,
-                                top: '-20px',
+                                top: `${p.top}%`,
                                 animationDuration: `${p.duration}s`,
                                 animationDelay: `${p.delay}s`
                             }}
@@ -412,9 +434,9 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
                 </div>
             )}
 
-            {/* THUNDER FLASH */}
-            {showThunderFlash && (
-                <div className="absolute inset-0 bg-white animate-flash opacity-0 mix-blend-overlay z-[56]"></div>
+            {/* THUNDER FLASH - Only on actual strikes */}
+            {showFlash && (
+                <div className="absolute inset-0 bg-white/80 z-[56]"></div>
             )}
 
             {/* FOG - Clear Hole via Mask */}
@@ -428,16 +450,26 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
                 ></div>
             )}
 
-            {/* WIND */}
+            {/* WIND - Larger container with smooth rotation */}
             {showWind && (
-                <div className="absolute inset-0 z-[55]">
+                <div
+                    className="absolute z-[55] transition-transform duration-500 ease-out"
+                    style={{
+                        top: '-50%',
+                        left: '-50%',
+                        width: '200%',
+                        height: '200%',
+                        transform: `rotate(${displayAngle}deg)`,
+                        transformOrigin: 'center center'
+                    }}
+                >
                     {windParticles.map((p) => (
                         <div
                             key={p.id}
                             className="absolute bg-white/40 w-96 h-[4px] rounded-full animate-wind-fly blur-[1px]"
                             style={{
                                 top: `${p.top}%`,
-                                left: `-20%`,
+                                left: `${p.left}%`,
                                 animationDuration: `${p.duration}s`,
                                 animationDelay: `${p.delay}s`
                             }}
@@ -445,6 +477,77 @@ const WeatherOverlay = ({ weatherType, windSpeed, mousePos, active, soundEnabled
                     ))}
                 </div>
             )}
+        </div>
+    );
+};
+
+
+const StatusBar = ({ status, retry }) => {
+    const tickerItems = [
+        { city: "TOKYO", temp: 24, cond: "RAIN" },
+        { city: "BERLIN", temp: 12, cond: "CLOUDS" },
+        { city: "NEW YORK", temp: 18, cond: "CLEAR" },
+        { city: "LONDON", temp: 9, cond: "FOG" },
+        { city: "PARIS", temp: 15, cond: "WIND" },
+        { city: "MOSCOW", temp: -2, cond: "SNOW" },
+        { city: "SYDNEY", temp: 28, cond: "SUN" },
+        { city: "DUBAI", temp: 35, cond: "CLEAR" },
+    ];
+
+    return (
+        <div className="fixed bottom-0 left-0 w-full z-50 pointer-events-none">
+            {/* Glass Bar */}
+            <div className="bg-black/80 backdrop-blur-md border-t border-white/10 px-6 py-2 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-white/60">
+
+                {/* Left: Status Indicator */}
+                <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${status === 'online' ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : status === 'offline' ? 'bg-red-500 shadow-[0_0_10px_#ef4444] animate-pulse' : 'bg-yellow-500 animate-pulse'}`}></div>
+                    <span className={status === 'offline' ? 'text-red-500 font-bold' : status === 'online' ? 'text-green-500 font-bold' : 'text-yellow-500'}>
+                        {status === 'online' ? 'API ONLINE' : status === 'offline' ? 'API OFFLINE - GOD MODE ACTIVE' : 'INITIALIZING UPLINK...'}
+                    </span>
+                </div>
+
+                {/* Center: Ticker (Only online) */}
+                {status === 'online' && (
+                    <div className="flex-1 overflow-hidden mx-10 relative h-4">
+                        <div className="absolute whitespace-nowrap animate-ticker flex gap-8">
+                            {[...tickerItems, ...tickerItems, ...tickerItems].map((item, i) => (
+                                <span key={i} className="opacity-70">
+                                    <span className="text-white/40 font-bold">{item.city}:</span> <span className="text-white">{item.temp}°C</span> <span className="text-white/60">[{item.cond}]</span>
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Right: Retry Button (Only offline/checking) */}
+                {(status === 'offline' || status === 'checking') && (
+                    <button
+                        onClick={retry}
+                        className="pointer-events-auto hover:text-white transition-colors"
+                        disabled={status === 'checking'}
+                    >
+                        {status === 'checking' ? 'PINGING...' : 'RETRY CONNECTION'}
+                    </button>
+                )}
+
+                {status === 'online' && (
+                    <div className="pointer-events-auto hover:text-white transition-colors">
+                        LATENCY: {Math.floor(20 + Math.random() * 30)}MS
+                    </div>
+                )}
+            </div>
+
+            {/* Ticker Animation Style Injection */}
+            <style>{`
+                @keyframes ticker {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(-33.33%); }
+                }
+                .animate-ticker {
+                    animation: ticker 40s linear infinite;
+                }
+            `}</style>
         </div>
     );
 };
@@ -461,9 +564,57 @@ export default function App() {
     const [error, setError] = useState(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const [isGodMinimized, setIsGodMinimized] = useState(false);
-    const [soundEnabled, setSoundEnabled] = useState(false);
     const [showSearch, setShowSearch] = useState(true);
+    const [apiStatus, setApiStatus] = useState('checking'); // checking, online, offline
+
     const navigate = useNavigate();
+    const { updateWeather, windDirection, triggerThunder, lastThunderTime } = useWeather();
+    const { loadImprovementsForPage } = useUX();
+
+    useEffect(() => {
+        loadImprovementsForPage('WeatherPage');
+    }, [loadImprovementsForPage]);
+
+    // Check API Health
+    const checkApiHealth = useCallback(async () => {
+        setApiStatus('checking');
+
+        // 1. Check Browser Connectivity
+        if (!navigator.onLine) {
+            setApiStatus('offline');
+            setMode('god');
+            setGodOverride(prev => ({ ...prev, active: true, weatherCode: 95 }));
+            return;
+        }
+
+        try {
+            // Using a known city to test connection
+            const res = await fetch(`/api/weather/current?name=London`);
+
+            // 2. Check HTTP Status
+            if (!res.ok) {
+                throw new Error(`API Error: ${res.status}`);
+            }
+
+            // Artificial delay for cool effect
+            setTimeout(() => {
+                setApiStatus('online');
+            }, 800);
+
+        } catch (e) {
+            console.error("API Health Check Failed:", e);
+            setApiStatus('offline');
+            setShowOfflineDialog(true);
+        }
+    }, [setMode]);
+
+    useEffect(() => {
+        checkApiHealth(); // Initial check
+        const interval = setInterval(checkApiHealth, 10000); // Check every 10 seconds
+        return () => clearInterval(interval);
+    }, [checkApiHealth]);
+
+
 
     // --- PRANK STATE ---
     // 1. Jumping Input (Hover)
@@ -583,7 +734,6 @@ export default function App() {
                 // Rotate based on length
                 return { transform: `rotate(${delayedValue.length * 5}deg)` };
             case 'INVERSE':
-                // Just CSS mirror? Or text manipulation? Let's do CSS mirror
                 return { transform: 'scaleX(-1)' };
             case 'SHUFFLE':
                 return {}; // Logic handled in text rendering
@@ -609,13 +759,31 @@ export default function App() {
         lon: -74.0060
     });
 
+    // Sync weather data with global context for cursor effects
+    useEffect(() => {
+        if (weatherData || godOverride.active) {
+            const data = godOverride.active ? {
+                temperature: godOverride.temperature,
+                windSpeed: godOverride.windSpeed,
+                weatherType: getWeatherType(godOverride.weatherCode),
+                viewMode: mode
+            } : {
+                temperature: weatherData?.temp,
+                windSpeed: weatherData?.wind,
+                weatherType: getWeatherType(weatherData?.code),
+                viewMode: mode
+            };
+            updateWeather(data);
+        }
+    }, [weatherData, godOverride.active, godOverride.temperature, godOverride.windSpeed, godOverride.weatherCode, mode, updateWeather]);
+
     useEffect(() => {
         const handleMouseMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
         window.addEventListener('mousemove', handleMouseMove);
         return () => window.removeEventListener('mousemove', handleMouseMove);
     }, []);
 
-    // Cloud Logic (Moved to Main Flow)
+    // Cloud Logic
     const [clouds, setClouds] = useState([]);
     useEffect(() => {
         const c = [];
@@ -653,8 +821,24 @@ export default function App() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [mode]);
 
+    const [showOfflineDialog, setShowOfflineDialog] = useState(false);
+
     const handleSearch = async () => {
         if (!location) return;
+
+        // OFFLINE HANDLING
+        if (!navigator.onLine) {
+            setShowOfflineDialog(true);
+            return;
+        }
+
+        // SWITCH TO NORMAL IF IN GOD MODE
+        if (mode === 'god') {
+            setMode('normal');
+            // Also ensure override is disabled so we see real data
+            setGodOverride(prev => ({ ...prev, active: false }));
+        }
+
         setLoading(true);
         setError('');
         try {
@@ -698,7 +882,24 @@ export default function App() {
     const weatherType = getWeatherType(currentDisplay.code);
     const isEffectsActive = mode !== 'dev';
 
+    // Trigger thunder periodically
+    useEffect(() => {
+        if (weatherType !== 'thunder') return;
+
+        // Initial trigger
+        triggerThunder();
+
+        const thunderInterval = setInterval(() => {
+            triggerThunder();
+        }, 3000 + Math.random() * 2000); // 3-5 seconds
+
+        return () => clearInterval(thunderInterval);
+    }, [weatherType, triggerThunder]);
+
     const getBgClass = () => {
+        // SEARCH PAGE (Neutral Background)
+        if (!weatherData && !godOverride.active) return 'bg-zinc-950';
+
         const isWarm = currentDisplay.temp >= 20;
         const isDev = mode === 'dev';
 
@@ -803,17 +1004,55 @@ export default function App() {
 
     return (
         <ImprovementWrapper>
+            <StatusBar status={apiStatus} retry={checkApiHealth} />
 
-            <div className={`min-h-screen w-full relative overflow-x-hidden transition-colors duration-1000 ${getBgClass()} ${getTextClass()} font-sans selection:bg-white/20 selection:text-white cursor-none`}>
+            {/* Offline Confirmation Dialog */}
+            {showOfflineDialog && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-zinc-900 border border-white/10 p-8 rounded-3xl max-w-sm text-center shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-red-500/50"></div>
+                        <WifiOff className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-white mb-2 tracking-wide">CONNECTION LOST</h3>
+                        <p className="text-white/50 text-[11px] uppercase tracking-wider mb-8 leading-relaxed">
+                            Unable to verify location data. <br />
+                            External validation required.
+                        </p>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowOfflineDialog(false);
+                                    setMode('god');
+                                    setGodOverride(prev => ({ ...prev, active: true, weatherCode: 95 }));
+                                    setError('OFFLINE MODE - GOD ACCESS GRANTED');
+                                    setShowSearch(false);
+                                }}
+                                className="w-full py-3 bg-white text-black text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-gray-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                            >
+                                Activate God Mode
+                            </button>
+                            <button
+                                onClick={() => setShowOfflineDialog(false)}
+                                className="w-full py-3 bg-white/5 text-white/40 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-white/10 hover:text-white transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-                <CustomCursor />
+            <div id="weather-container" className={`min-h-screen w-full relative overflow-x-hidden transition-colors duration-1000 ${getBgClass()} ${getTextClass()} font-sans selection:bg-white/20 selection:text-white cursor-none`}>
+
 
                 <WeatherOverlay
+                    id="weather-overlay"
                     weatherType={weatherType}
                     windSpeed={currentDisplay.wind}
                     mousePos={mousePos}
-                    active={isEffectsActive}
-                    soundEnabled={soundEnabled}
+                    active={isEffectsActive && (weatherData || godOverride.active)}
+
+                    windDirection={windDirection}
+                    lastThunderTime={lastThunderTime}
                 />
 
                 <div className={`relative flex flex-col min-h-screen`}>
@@ -830,11 +1069,10 @@ export default function App() {
                     <div className="relative z-50 flex justify-between items-start p-8 w-full max-w-screen-2xl mx-auto pointer-events-none">
                         <div className="flex gap-4 relative z-50 pointer-events-auto">
                             <button onClick={() => navigate(`/dashboard?username=${username}`)} className={`p-3 rounded-full backdrop-blur-md transition-all duration-300 border border-white/5 hover:bg-white/10 text-white/80 hover:text-white`} title="Back to Dashboard"><Home size={18} /></button>
-                            <button onClick={() => setSoundEnabled(!soundEnabled)} className={`p-3 rounded-full backdrop-blur-md border border-white/5 transition-all ${soundEnabled ? 'bg-white/10 text-white' : 'bg-transparent text-white/40 hover:text-white'}`}><Volume2 size={18} /></button>
                         </div>
                         <div className="absolute top-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-3 z-40 pointer-events-auto w-full max-w-md">
                             {/* MODE SWITCHER */}
-                            <div className="flex bg-black/40 backdrop-blur-xl rounded-full p-1.5 border border-white/10 shadow-2xl">
+                            <div id="mode-switcher" className="flex bg-black/40 backdrop-blur-xl rounded-full p-1.5 border border-white/10 shadow-2xl">
                                 {['normal', 'dev', 'god'].map((m) => (
                                     <button key={m} onClick={() => setMode(m)} className={`relative px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${mode === m ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>{m}</button>
                                 ))}
@@ -861,7 +1099,7 @@ export default function App() {
                             )}
                         </div>
 
-                        {/* TOP RIGHT - REMOVED OLD SEARCH */}
+                        {/* TOP RIGHT */}
                     </div>
 
                     <div className={`flex-1 flex flex-col items-center justify-start pt-12 relative z-10 w-full max-w-[1400px] mx-auto px-6 pb-20`}>
@@ -909,7 +1147,6 @@ export default function App() {
                                                         onClick={(e) => {
                                                             e.stopPropagation(); // Prevent search submission if bubbling?
                                                             cyclePrankEffect();
-                                                            // Maybe jump input away too? Or just cycle. 
                                                         }}
                                                         className="px-6 py-4 hover:bg-white/10 cursor-pointer border-b border-white/5 last:border-0 flex items-center gap-3 group/item transition-colors"
                                                     >
@@ -934,11 +1171,11 @@ export default function App() {
                                                 <span className="text-[10px] uppercase tracking-[0.25em] font-bold text-white/70">{currentDisplay.city}, {currentDisplay.country}</span>
                                             </div>
                                         </div>
-                                        <div className="relative inline-block py-4">
+                                        <div id="main-temp" className="relative inline-block py-4">
                                             <h1 className="text-[20vw] lg:text-[15rem] xl:text-[18rem] leading-[0.8] font-[100] tracking-tighter text-white mix-blend-overlay select-none">{Math.round(currentDisplay.temp)}°</h1>
                                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-white/5 blur-[100px] rounded-full -z-10 pointer-events-none"></div>
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-16 w-full max-w-5xl mx-auto relative z-20">
+                                        <div id="stats-grid" className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-16 w-full max-w-5xl mx-auto relative z-20">
                                             {[{ icon: Wind, value: currentDisplay.wind, unit: 'KM/H', label: 'Wind Velocity' }, { icon: Droplets, value: currentDisplay.humidity, unit: '%', label: 'Humidity' }, { icon: Gauge, value: Math.round(currentDisplay.pressure), unit: 'hPa', label: 'Pressure' }].map((stat, i) => (
                                                 <div key={i} className="flex flex-col items-center justify-center p-8 rounded-[2rem] transition-all duration-500 group w-full border border-transparent hover:bg-white/5 hover:backdrop-blur-md hover:border-white/5">
                                                     <stat.icon size={28} className="text-white/30 mb-4 group-hover:text-white/80 transition-colors" />

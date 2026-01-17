@@ -1,17 +1,25 @@
 import { createBrowserRouter, Outlet } from "react-router-dom";
 
+import LandingPage from "../pages/landing/LandingPage";
 import LoginPage from "../pages/login/LoginPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
 import BookingPage from "../pages/booking/BookingPage";
 import WeatherPage from "../pages/weather/WeatherPage";
 import FileStoragePage from "../pages/filestorage/FileStoragePage";
 import CookieConsent from "../components/ui/CookieConsent";
+import RandomPopup from "../components/ui/RandomPopup";
+import WeatherCursor from "../components/ui/WeatherCursor";
 
-// Root Layout that includes CookieConsent on every page
+import { useUX } from "../context/UXContext";
+
+// Root Layout that includes CookieConsent, RandomPopup and WeatherCursor
 function RootLayout() {
+    const { disclaimerAccepted } = useUX();
     return (
         <>
-            <CookieConsent />
+            <WeatherCursor />
+            {disclaimerAccepted && <CookieConsent />}
+            <RandomPopup />
             <Outlet />
         </>
     );
@@ -23,6 +31,10 @@ const router = createBrowserRouter([
         children: [
             {
                 path: "/",
+                element: <LandingPage />,
+            },
+            {
+                path: "/login",
                 element: <LoginPage />,
             },
             {
