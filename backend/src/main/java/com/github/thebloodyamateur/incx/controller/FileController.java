@@ -70,7 +70,7 @@ public class FileController {
         @RequestParam String parentDirectory,
         @RequestParam String bucketName
     ) {
-        log.info("Received directory creation request for directory: " + directoryName + " in bucket: " + bucketName);
+        log.info("Received directory creation request for directory: " + directoryName + " in bucket: " + bucketName + " under parent directory: " + parentDirectory);
         return fileService.createDirectory(directoryName, parentDirectory, bucketName);
     }
 

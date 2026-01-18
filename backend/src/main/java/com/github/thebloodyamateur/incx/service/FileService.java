@@ -211,6 +211,11 @@ public class FileService {
                 .minioPath(bucketName + "/" + finalDirectoryPath)
                 .size(0L)
                 .type(MinioObject.ObjectType.FOLDER)
+                .parent(
+                    parentDirectory != null && !parentDirectory.isEmpty() ?
+                    minioObjectsRepository.findByMinioBucketAndName(bucket, parentDirectory).orElse(null) :
+                    null
+                )
                 .build();
 
             minioObject.setMinioBucket(bucket);
