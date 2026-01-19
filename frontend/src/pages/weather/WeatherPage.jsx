@@ -568,12 +568,13 @@ export default function App() {
     const [apiStatus, setApiStatus] = useState('checking'); // checking, online, offline
 
     const navigate = useNavigate();
-    const { updateWeather, windDirection, triggerThunder, lastThunderTime } = useWeather();
+    const { updateWeather, windDirection, triggerThunder, lastThunderTime, clearWeather } = useWeather();
     const { loadImprovementsForPage } = useUX();
 
     useEffect(() => {
         loadImprovementsForPage('WeatherPage');
-    }, [loadImprovementsForPage]);
+        return () => clearWeather();
+    }, [loadImprovementsForPage, clearWeather]);
 
     // Check API Health
     const checkApiHealth = useCallback(async () => {
